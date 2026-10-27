@@ -125,7 +125,7 @@ app.post('/api/tts/clear-cache', (_req: Request, res: Response) => {
 // VibeVoice Text-to-Speech Endpoint with Multi-Tier Storage Cache
 app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { text, voiceName = 'Kore', style, regenerate = false } = req.body;
+    const { text, voiceName = 'Kore', style, regenerate = false, ipa } = req.body;
     const engine: TtsEngine = req.body.engine in TTS_ENGINES ? req.body.engine : 'vibevoice';
     const engineCfg = TTS_ENGINES[engine];
 
@@ -137,7 +137,9 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
     const defaultStyle =
       'Enthusiastic, clear, warm elementary school teacher pronouncing English phonics for children aged 7-11. Crisp enunciation.';
 
-    const cacheFilePath = getCacheFilePath(text, voiceName, style, engine);
+    // Isolated phonics sounds: Kokoro reads the IPA itself; other engines read the teacher's spelling in `text`
+    const usePhonemes = typeof ipa === 'string' && ipa.length > 0 && engine === 'kokoro';
+    const cacheFilePath = getCacheFilePath(text, voiceName, ipa ? `ipa:${ipa}` : style, engine);
 
     // 1. TIER 1: Check Server Persistent Disk Cache (skipped when regenerating a bad take)
     if (!regenerate && fs.existsSync(cacheFilePath)) {
@@ -166,6 +168,7 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text,
+        ...(usePhonemes ? { phonemes: ipa } : {}),
         voice: engineVoice,
         lang: engineCfg.lang,
         speed: style && /slow/i.test(style) ? 0.8 : 1.0,

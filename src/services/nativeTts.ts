@@ -12,6 +12,8 @@ export interface NativeVoice {
 
 interface SpeechOptions {
   text: string;
+  /** IPA pronunciation for `text` (AVSpeechSynthesisIPANotationAttribute) */
+  ipa?: string;
   voiceId?: string;
   language?: string;
   rate?: number;

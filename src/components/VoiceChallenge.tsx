@@ -54,6 +54,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
       voiceName: teacherVoice,
       breakdown: true,
       slow: true,
+      phonetics: activeWord.phonetics,
     });
   };
 

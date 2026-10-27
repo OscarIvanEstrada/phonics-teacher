@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { getAudioFromCache, saveAudioToCache } from './indexedDb';
+import { PhonemeSound, parsePhonetics } from './phonemes';
 import { NativeTTS, NATIVE_RATE, TeacherVoiceKey, defaultVoiceFor, getVoicePrefs, listEnglishVoices } from './nativeTts';
 
 // On iOS (Capacitor) speech is synthesized on-device by AVSpeechSynthesizer, then cached like web audio.
@@ -11,6 +12,10 @@ export type AudioPlaybackSource = 'indexeddb' | 'server-cache' | TtsEngine | 'io
 type SpeakOptions = {
   voiceName?: 'Kore' | 'Puck' | 'Zephyr';
   breakdown?: boolean;
+  /** IPA like "/k/ /æ/ /t/": with `breakdown`, the teacher says each sound, then the word */
+  phonetics?: string;
+  /** Called with the index of the sound being said during a breakdown (-1 for the whole word) */
+  onSound?: (index: number) => void;
   slow?: boolean;
   regenerate?: boolean;
 };
@@ -126,6 +131,63 @@ class AudioService {
    * falling back smoothly to Web Speech API if the engine is unreachable.
    * `regenerate` skips every cache and replaces the stored audio.
    */
+  /**
+   * Say one isolated phonics sound (or a blended chunk like a rime).
+   * Kokoro and iOS read the IPA exactly; text-only engines read the teacher's spelling.
+   * Clips are cached per sound, so /æ/ is synthesized once and reused by every word.
+   */
+  public async speakSound(sound: PhonemeSound, options: { voiceName?: SpeakOptions['voiceName']; slow?: boolean } = {}): Promise<void> {
+    if (!this.soundEnabled) return;
+    const voice = options.voiceName || 'Kore';
+    const engineTag = isNativeApp ? 'ios' : this.engine;
+    const cacheKey = `sound_${engineTag}_${voice}_${sound.ipa}`;
+
+    try {
+      const cached = await getAudioFromCache(cacheKey);
+      if (cached?.base64) {
+        await this.playBase64Wav(cached.base64);
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      let audioBase64: string | undefined;
+      if (isNativeApp) {
+        const voiceId = await this.resolveNativeVoiceId(voice);
+        const rate = options.slow ? NATIVE_RATE.slow : NATIVE_RATE.normal;
+        ({ audioBase64 } = await NativeTTS.synthesize({ text: sound.spoken, ipa: sound.ipa, voiceId, rate }));
+      } else {
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: sound.spoken, ipa: sound.ipa, voiceName: voice, engine: this.engine }),
+        });
+        if (response.ok) audioBase64 = (await response.json()).audioBase64;
+      }
+      if (audioBase64) {
+        await saveAudioToCache(cacheKey, audioBase64, `/${sound.symbol}/`, voice);
+        await this.playBase64Wav(audioBase64);
+        return;
+      }
+    } catch (err) {
+      console.warn('Phoneme synthesis failed:', err);
+    }
+    if (!isNativeApp) this.speakWithBrowserSpeech(sound.spoken, 0.7);
+  }
+
+  /** Teacher-style breakdown: each sound with a pause, then the whole word. */
+  private async speakBreakdown(text: string, sounds: PhonemeSound[], options: SpeakOptions): Promise<void> {
+    const gap = options.slow ? 650 : 450;
+    for (let i = 0; i < sounds.length; i++) {
+      options.onSound?.(i);
+      await this.speakSound(sounds[i], { voiceName: options.voiceName, slow: options.slow });
+      await new Promise((r) => setTimeout(r, gap));
+    }
+    options.onSound?.(-1);
+    await new Promise((r) => setTimeout(r, gap / 2));
+    await this.speakPhonicsWord(text, { voiceName: options.voiceName });
+  }
+
   public async speakPhonicsWord(text: string, options: SpeakOptions = {}): Promise<void> {
     if (!this.soundEnabled) return;
 
@@ -133,6 +195,12 @@ class AudioService {
 
     const cleanText = text.trim();
     if (!cleanText) return;
+
+    const sounds = options.breakdown && options.phonetics ? parsePhonetics(options.phonetics) : [];
+    if (sounds.length > 0) {
+      this.lastRequest = { text: cleanText, options: { ...options, regenerate: false } };
+      return this.speakBreakdown(cleanText, sounds, options);
+    }
 
     this.lastRequest = { text: cleanText, options: { ...options, regenerate: false } };
 

@@ -70,7 +70,19 @@ public class NativeTTSPlugin: CAPPlugin, CAPBridgedPlugin, AVSpeechSynthesizerDe
             call.reject("text is required")
             return nil
         }
-        let utterance = AVSpeechUtterance(string: text)
+        let utterance: AVSpeechUtterance
+        if let ipa = call.getString("ipa"), !ipa.isEmpty {
+            // Pronounce `text` exactly as the given IPA (isolated phonics sounds like /æː/ or /kᵊ/)
+            let attributed = NSMutableAttributedString(string: text)
+            attributed.addAttribute(
+                NSAttributedString.Key(rawValue: AVSpeechSynthesisIPANotationAttribute),
+                value: ipa,
+                range: NSRange(location: 0, length: attributed.length)
+            )
+            utterance = AVSpeechUtterance(attributedString: attributed)
+        } else {
+            utterance = AVSpeechUtterance(string: text)
+        }
         if let voiceId = call.getString("voiceId"), let voice = AVSpeechSynthesisVoice(identifier: voiceId) {
             utterance.voice = voice
         } else {

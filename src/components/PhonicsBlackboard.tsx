@@ -11,6 +11,7 @@ import {
 import { PHONICS_GROUPS } from '../data/phonicsCurriculum';
 import { PhonicsWord, WordFamily } from '../types/phonics';
 import { audioService } from '../services/audioService';
+import { splitOnsetRime } from '../services/phonemes';
 import { WordMasteryRecord } from '../services/indexedDb';
 
 interface PhonicsBlackboardProps {
@@ -60,20 +61,33 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
         voiceName: teacherVoice,
         breakdown: slowBreakdown,
         slow: slowBreakdown,
+        phonetics: word.phonetics,
       });
     } finally {
       setActivePlayingWord(null);
     }
   };
 
-  const handlePlayOnset = (onset: string) => {
-    audioService.playChalkSound();
-    audioService.speakPhonicsWord(`Sound: /${onset}/`, { voiceName: teacherVoice, slow: true });
+  // Onset and rime are said as sounds (/k/, /æn/), never as letter names
+  const blendParts = selectedWordForBlend
+    ? splitOnsetRime(selectedWordForBlend.phonetics, selectedWordForBlend.rime)
+    : { onset: [], rime: null };
+
+  const speakOnset = async () => {
+    for (const sound of blendParts.onset) {
+      await audioService.speakSound(sound, { voiceName: teacherVoice, slow: true });
+      await new Promise((r) => setTimeout(r, 250));
+    }
   };
 
-  const handlePlayRime = (rime: string) => {
+  const handlePlayOnset = () => {
     audioService.playChalkSound();
-    audioService.speakPhonicsWord(`Sound: /${rime.replace('-', '')}/`, { voiceName: teacherVoice, slow: true });
+    speakOnset();
+  };
+
+  const handlePlayRime = () => {
+    audioService.playChalkSound();
+    if (blendParts.rime) audioService.speakSound(blendParts.rime, { voiceName: teacherVoice, slow: true });
   };
 
   const handleTriggerBlend = async () => {
@@ -81,12 +95,12 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
     setIsBlending(true);
     audioService.playChalkSound();
 
-    // 1. Speak onset
-    await audioService.speakPhonicsWord(selectedWordForBlend.onset, { voiceName: teacherVoice, slow: true });
+    // 1. Speak onset sound(s)
+    await speakOnset();
     await new Promise((r) => setTimeout(r, 450));
 
-    // 2. Speak rime
-    await audioService.speakPhonicsWord(selectedWordForBlend.rime.replace('-', ''), { voiceName: teacherVoice, slow: true });
+    // 2. Speak rime as one blended sound
+    if (blendParts.rime) await audioService.speakSound(blendParts.rime, { voiceName: teacherVoice, slow: true });
     await new Promise((r) => setTimeout(r, 450));
 
     // 3. Blend together
@@ -188,14 +202,14 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
                 Sonido Inicial (Onset)
               </span>
               <button
-                onClick={() => handlePlayOnset(selectedWordForBlend?.onset || '')}
+                onClick={handlePlayOnset}
                 className="w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-teacher font-extrabold text-3xl shadow-lg border-2 border-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                 title="Escuchar sonido inicial"
               >
                 {selectedWordForBlend?.onset || '-'}
               </button>
               <span className="text-xs text-amber-200 mt-1 font-mono font-bold">
-                /{selectedWordForBlend?.onset}/
+                {blendParts.onset.length ? blendParts.onset.map((s) => `/${s.symbol}/`).join(" ") : `/${selectedWordForBlend?.onset}/`}
               </span>
             </div>
 
@@ -210,7 +224,7 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
                 Familia (Rime)
               </span>
               <button
-                onClick={() => handlePlayRime(selectedWordForBlend?.rime || '')}
+                onClick={handlePlayRime}
                 className="px-5 h-16 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-white font-teacher font-extrabold text-3xl shadow-lg border-2 border-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                 title="Escuchar sonido de la familia"
               >
