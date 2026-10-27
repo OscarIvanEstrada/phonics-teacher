@@ -26,7 +26,6 @@ import {
 import { audioService, AudioPlaybackEvent, TtsEngine, isNativeApp } from './services/audioService';
 
 const ENGINE_LABELS: Record<TtsEngine, string> = {
-  vibevoice: 'VibeVoice',
   kokoro: 'Kokoro',
   chatterbox: 'Chatterbox',
 };
@@ -235,8 +234,6 @@ export default function App() {
               Palabra: "{lastPlaybackEvent.word}" •{' '}
               {lastPlaybackEvent.source === 'github'
                 ? `GitHub · ${ENGINE_LABELS[lastPlaybackEvent.engine]}`
-                : lastPlaybackEvent.source === 'vibevoice'
-                ? 'VibeVoice TTS'
                 : lastPlaybackEvent.source === 'kokoro'
                 ? 'Kokoro TTS'
                 : lastPlaybackEvent.source === 'chatterbox'
@@ -393,7 +390,7 @@ export default function App() {
               Phonics Academy (7 - 11 Años)
             </span>
             <span className="text-slate-500">•</span>
-            <span>VibeVoice TTS & IndexedDB Memory System</span>
+            <span>Kokoro & Chatterbox TTS · Audios en GitHub</span>
           </div>
           <div className="text-center sm:text-right text-slate-400">
             Familias Vocales Cortas (-an, -in, -en, -un, Short A, E, I, O, U) y Grados 1º a 3º

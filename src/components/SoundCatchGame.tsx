@@ -172,7 +172,7 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
               ¡Entrena tu oído para reconocer cada sonido!
             </h3>
             <p className="text-xs sm:text-sm text-sky-100 font-medium leading-relaxed">
-              El profesor pronunciará una palabra en inglés con <strong>VibeVoice TTS</strong>. Tu misión es
+              El profesor pronunciará una palabra en inglés con <strong>voz del profesor IA</strong>. Tu misión es
               atrapar la tarjeta correcta entre las opciones antes de que termine el tiempo.
             </p>
             <button

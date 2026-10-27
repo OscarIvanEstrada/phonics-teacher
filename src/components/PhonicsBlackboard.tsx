@@ -340,7 +340,7 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
                       </div>
                     </div>
 
-                    {/* Quick Pronounce Button (VibeVoice TTS) */}
+                    {/* Quick Pronounce Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -351,7 +351,7 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
                           ? 'bg-green-500 text-white animate-bounce'
                           : 'bg-amber-400 hover:bg-amber-300 text-slate-900 active:scale-95'
                       }`}
-                      title="Escuchar pronunciación con VibeVoice TTS"
+                      title="Escuchar pronunciación con voz del profesor IA"
                     >
                       <Volume2 className="w-4 h-4" />
                     </button>

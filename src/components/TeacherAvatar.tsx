@@ -177,13 +177,13 @@ export const TeacherAvatar: React.FC<TeacherAvatarProps> = ({
           <button
             onClick={handleSpeech}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-teacher font-bold text-xs shadow transition-all duration-150 cursor-pointer"
-            title="Escuchar al profesor en voz alta con VibeVoice TTS"
+            title="Escuchar al profesor en voz alta con voz del profesor IA"
           >
             <Volume2 className="w-3.5 h-3.5 animate-pulse" />
             <span>Escuchar al Profesor</span>
           </button>
           <span className="text-[11px] text-amber-800/70 font-semibold hidden md:inline">
-            Voz impulsada por VibeVoice TTS
+            Voz de Kokoro y Chatterbox
           </span>
         </div>
       </div>

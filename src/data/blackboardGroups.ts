@@ -13,9 +13,9 @@ const SENTENCES = new Map(
   PHONICS_GROUPS.flatMap((g) => g.families.flatMap((f) => f.words)).map((w) => [w.word, w] as const)
 );
 
-/** Onset = letters before the first vowel ("qu" counts as onset): "truck" → tr + -uck. */
+/** Onset = letters before the first vowel ("qu" and an initial "y" count as onset): "truck" → tr + -uck, "yarn" → y + -arn. */
 function splitSpelling(word: string): { onset: string; rime: string } {
-  const match = /^((?:qu|[^aeiouy])*)(.*)$/.exec(word);
+  const match = /^(y?(?:qu|[^aeiouy])*)(.*)$/.exec(word);
   const onset = match?.[1] ?? '';
   const rime = match?.[2] ?? word;
   return onset && rime ? { onset, rime: `-${rime}` } : { onset: word, rime: '' };

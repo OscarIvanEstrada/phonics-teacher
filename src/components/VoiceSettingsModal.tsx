@@ -96,7 +96,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
         <div className="px-4 pt-4">
           <div className="text-xs font-bold text-slate-500 mb-1.5">Audios publicados en GitHub</div>
           <div className="flex gap-2">
-            {(['vibevoice', 'kokoro', 'chatterbox'] as TtsEngine[]).map((value) => (
+            {(['kokoro', 'chatterbox'] as TtsEngine[]).map((value) => (
               <button
                 key={value}
                 onClick={() => chooseEngine(value)}

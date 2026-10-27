@@ -12,7 +12,6 @@ interface AudioCacheModalProps {
 
 const SOURCE_LABEL: Record<AudioPlaybackEvent['source'], string> = {
   github: '📦 Leído de GitHub (ya estaba publicado)',
-  vibevoice: '✨ Generado con VibeVoice (se publica en GitHub)',
   kokoro: '✨ Generado con Kokoro (se publica en GitHub)',
   chatterbox: '✨ Generado con Chatterbox (se publica en GitHub)',
   'ios-native': '📱 Voz del iPhone (no se publica)',

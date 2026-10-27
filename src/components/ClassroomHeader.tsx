@@ -142,7 +142,7 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
           <button
             onClick={onOpenAudioCacheModal}
             className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1.5 rounded-2xl text-xs font-bold font-teacher text-emerald-800 transition-colors cursor-pointer shadow-xs active:scale-95"
-            title="Ver caché de audios de VibeVoice TTS y ahorro de cuota"
+            title="Ver los audios publicados en GitHub"
           >
             <Database className="w-3.5 h-3.5 text-emerald-600" />
             <span className="hidden sm:inline">Caché TTS</span>

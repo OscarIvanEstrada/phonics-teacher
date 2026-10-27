@@ -7,7 +7,7 @@ import { NativeTTS, NATIVE_RATE, TeacherVoiceKey, defaultVoiceFor, getVoicePrefs
 // On iOS (Capacitor) speech is synthesized on-device by AVSpeechSynthesizer, then cached like web audio.
 export const isNativeApp = Capacitor.isNativePlatform();
 
-export type TtsEngine = 'vibevoice' | 'kokoro' | 'chatterbox';
+export type TtsEngine = 'kokoro' | 'chatterbox';
 export type AudioPlaybackSource = 'github' | TtsEngine | 'ios-native' | 'browser-fallback';
 
 type SpeakOptions = {
@@ -47,7 +47,8 @@ class AudioService {
     // AudioContext will be lazily initialized upon first user interaction
     try {
       const stored = localStorage.getItem(ENGINE_STORAGE_KEY);
-      if (stored === 'vibevoice' || stored === 'chatterbox' || stored === 'kokoro') this.engine = stored;
+      // A stored 'vibevoice' (removed engine) falls back to Kokoro
+      if (stored === 'chatterbox') this.engine = stored;
     } catch (e) {}
   }
 

@@ -32,13 +32,8 @@ const ai = apiKey
 
 
 // Local TTS sidecars (vector/tts-engine), one process per engine
-type TtsEngine = 'vibevoice' | 'kokoro' | 'chatterbox';
+type TtsEngine = 'kokoro' | 'chatterbox';
 const TTS_ENGINES: Record<TtsEngine, { url: string; lang: string; voices: Record<string, string> }> = {
-  vibevoice: {
-    url: process.env.TTS_VIBEVOICE_URL || 'http://127.0.0.1:8771',
-    lang: 'en',
-    voices: { Kore: 'en-emma_woman', Zephyr: 'en-grace_woman', Puck: 'en-carter_man' },
-  },
   kokoro: {
     url: process.env.TTS_KOKORO_URL || 'http://127.0.0.1:8772',
     lang: 'en-us',
@@ -138,7 +133,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
   try {
     const { text, voiceName = 'Kore', style, regenerate = false, ipa, slow = false, breakdown = false, publish = true } = req.body;
-    const engine: TtsEngine = req.body.engine in TTS_ENGINES ? req.body.engine : 'vibevoice';
+    const engine: TtsEngine = req.body.engine in TTS_ENGINES ? req.body.engine : 'kokoro';
     const engineCfg = TTS_ENGINES[engine];
 
     if (!text || typeof text !== 'string') {

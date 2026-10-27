@@ -151,7 +151,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
             <button
               onClick={handleListenTeacher}
               className="px-4 py-2 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/25 text-white font-teacher font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
-              title="Escuchar pronunciación estándar con VibeVoice TTS"
+              title="Escuchar pronunciación estándar con voz del profesor IA"
             >
               <Volume2 className="w-4 h-4 text-amber-300" />
               <span>Escuchar al Profesor</span>
@@ -258,7 +258,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
               <HelpCircle className="w-4 h-4 text-amber-400" />
               <span>
                 Tip: Para usar el micrófono recomendamos Chrome o Edge. También puedes practicar
-                escuchando la pronunciación lenta con VibeVoice TTS.
+                escuchando la pronunciación lenta con voz del profesor IA.
               </span>
             </div>
           )}

@@ -2,7 +2,7 @@
  * How a phonics teacher says each sound in isolation.
  * - `ipa`: standard IPA for engines that read phonemes (Kokoro, iOS AVSpeechSynthesizer).
  *   Vowels and continuants are held (ː); stops get only a light release (ᵊ), never a full "uh".
- * - `spoken`: plain-text spelling for engines that only read text (VibeVoice, Chatterbox).
+ * - `spoken`: plain-text spelling for engines that only read text (Chatterbox).
  */
 export interface PhonemeSound {
   symbol: string; // as written in the curriculum, e.g. "æ"
@@ -132,7 +132,7 @@ export function splitOnsetRime(phonetics: string, rimeText: string): { onset: Ph
     rime: {
       symbol: rimeSounds.map((s) => s.symbol).join(''),
       ipa: `ˈ${rimeSounds.map((s) => blendIpa(s.symbol)).join('')}`,
-      spoken: rimeText.replace('-', ''),
+      spoken: rimeText.replace('-', '') || rimeSounds.map((s) => s.spoken).join(''),
     },
   };
 }
