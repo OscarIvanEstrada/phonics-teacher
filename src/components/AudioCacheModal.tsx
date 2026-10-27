@@ -172,6 +172,7 @@ export const AudioCacheModal: React.FC<AudioCacheModalProps> = ({
                     {lastEvent.source === 'indexeddb' && 'Fuente: 💾 IndexedDB del Navegador (0 ms latencia, 0 consumo)'}
                     {lastEvent.source === 'server-cache' && 'Fuente: 🖥️ Caché en Disco del Servidor (0 consumo de API Gemini)'}
                     {lastEvent.source === 'vibevoice' && 'Fuente: ✨ Llamada a VibeVoice TTS (guardada en caché para futuras reproducciones)'}
+                    {lastEvent.source === 'chatterbox' && 'Fuente: ✨ Llamada a Chatterbox Turbo (guardada en caché para futuras reproducciones)'}
                     {lastEvent.source === 'kokoro' && 'Fuente: ✨ Llamada a Kokoro TTS (guardada en caché para futuras reproducciones)'}
                     {lastEvent.source === 'browser-fallback' && 'Fuente: 🗣️ Síntesis de voz del navegador (Modo de respaldo activo)'}
                   </div>

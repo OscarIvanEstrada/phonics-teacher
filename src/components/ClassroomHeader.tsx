@@ -83,7 +83,7 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b-2 border-amber-200 shadow-sm">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b-2 border-amber-200 shadow-sm pt-[env(safe-area-inset-top)]">
       {/* Top Bar: Title & Gamification HUD */}
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
         {/* Brand / Classroom Identity */}

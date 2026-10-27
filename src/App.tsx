@@ -7,6 +7,7 @@ import { WordLabAI } from './components/WordLabAI';
 import { SoundCatchGame } from './components/SoundCatchGame';
 import { RewardsAndStickers } from './components/RewardsAndStickers';
 import { AudioCacheModal } from './components/AudioCacheModal';
+import { VoiceSettingsModal } from './components/VoiceSettingsModal';
 import { PhonicsWord, UserStats } from './types/phonics';
 import { PHONICS_GROUPS } from './data/phonicsCurriculum';
 import {
@@ -17,6 +18,12 @@ import {
   WordMasteryRecord,
 } from './services/indexedDb';
 import { audioService, AudioPlaybackEvent, TtsEngine, isNativeApp } from './services/audioService';
+
+const ENGINE_LABELS: Record<TtsEngine, string> = {
+  vibevoice: 'VibeVoice',
+  kokoro: 'Kokoro',
+  chatterbox: 'Chatterbox',
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('pizarra');
@@ -30,6 +37,7 @@ export default function App() {
   const [lastPlaybackEvent, setLastPlaybackEvent] = useState<AudioPlaybackEvent | null>(null);
   const [ttsEngine, setTtsEngine] = useState<TtsEngine>(audioService.getEngine());
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
+  const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState<boolean>(false);
 
   const handleEngineChange = (engine: TtsEngine) => {
     audioService.setEngine(engine);
@@ -209,7 +217,7 @@ export default function App() {
                 ? 'Voz del Navegador (Respaldo activo)'
                 : lastPlaybackEvent.source === 'ios-native'
                 ? 'Voz del iPhone (en el dispositivo)'
-                : `Generado con ${lastPlaybackEvent.engine === 'kokoro' ? 'Kokoro' : 'VibeVoice'} TTS`}
+                : `Generado con ${ENGINE_LABELS[lastPlaybackEvent.engine]} TTS`}
             </div>
             <div className="text-slate-300 font-medium">
               Palabra: "{lastPlaybackEvent.word}" •{' '}
@@ -221,6 +229,8 @@ export default function App() {
                 ? 'VibeVoice TTS'
                 : lastPlaybackEvent.source === 'kokoro'
                 ? 'Kokoro TTS'
+                : lastPlaybackEvent.source === 'chatterbox'
+                ? 'Chatterbox Turbo'
                 : lastPlaybackEvent.source === 'ios-native'
                 ? 'Voz nativa de iOS'
                 : 'Síntesis local de respaldo'}
@@ -234,7 +244,7 @@ export default function App() {
       <div className="fixed bottom-5 left-5 z-40 bg-white/95 backdrop-blur-md px-3 py-2.5 rounded-2xl shadow-xl border border-slate-200 flex flex-col gap-2 text-xs max-w-[calc(100vw-2.5rem)]">
         <div className="flex items-center gap-1">
           <span className="font-bold text-slate-600 mr-1">Voz IA:</span>
-          {(['vibevoice', 'kokoro'] as TtsEngine[]).map((engine) => (
+          {(Object.keys(ENGINE_LABELS) as TtsEngine[]).map((engine) => (
             <button
               key={engine}
               onClick={() => handleEngineChange(engine)}
@@ -242,7 +252,7 @@ export default function App() {
                 ttsEngine === engine ? 'bg-amber-400 text-slate-900' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
             >
-              {engine === 'vibevoice' ? 'VibeVoice' : 'Kokoro'}
+              {ENGINE_LABELS[engine]}
             </button>
           ))}
         </div>
@@ -258,6 +268,21 @@ export default function App() {
         )}
       </div>
       )}
+
+      {/* iOS: on-device voice picker */}
+      {isNativeApp && (
+        <button
+          onClick={() => setIsVoiceSettingsOpen(true)}
+          className="fixed left-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-full shadow-xl border border-slate-200 text-sm font-bold text-indigo-700"
+        >
+          🎙️ Voces
+        </button>
+      )}
+      <VoiceSettingsModal
+        isOpen={isVoiceSettingsOpen}
+        onClose={() => setIsVoiceSettingsOpen(false)}
+        onCacheChanged={refreshAudioCacheData}
+      />
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">

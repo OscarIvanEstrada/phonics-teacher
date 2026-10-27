@@ -189,6 +189,11 @@ export async function saveAudioToCache(
       };
       store.put(record);
     };
+    // Resolve only once the write is committed, so readers right after see it
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
   } catch (err) {
     console.warn('Audio cache save error:', err);
   }
@@ -273,6 +278,24 @@ export async function clearAudioCache(): Promise<void> {
     const request = tx.objectStore(STORES.AUDIO_CACHE).clear();
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
+  });
+}
+
+/** Delete every cached audio whose key starts with `prefix` (e.g. after changing a teacher's voice). */
+export async function deleteAudioCacheByPrefix(prefix: string): Promise<void> {
+  const db = await getDB();
+  const cleanPrefix = prefix.toLowerCase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORES.AUDIO_CACHE, 'readwrite');
+    const request = tx.objectStore(STORES.AUDIO_CACHE).openCursor();
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) return;
+      if (String(cursor.key).startsWith(cleanPrefix)) cursor.delete();
+      cursor.continue();
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
   });
 }
 

@@ -1,22 +1,11 @@
 import { Capacitor } from '@capacitor/core';
-import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { getAudioFromCache, saveAudioToCache } from './indexedDb';
+import { NativeTTS, NATIVE_RATE, TeacherVoiceKey, defaultVoiceFor, getVoicePrefs, listEnglishVoices } from './nativeTts';
 
-// On iOS (Capacitor) speech is synthesized on-device by AVSpeechSynthesizer: no server, no cache.
+// On iOS (Capacitor) speech is synthesized on-device by AVSpeechSynthesizer, then cached like web audio.
 export const isNativeApp = Capacitor.isNativePlatform();
 
-// Apple English male voices, used for the male teacher (Puck)
-const APPLE_MALE_VOICES = ['evan', 'nathan', 'tom', 'aaron', 'alex', 'fred', 'daniel', 'arthur', 'oliver', 'rishi', 'gordon'];
-
-function appleVoiceQuality(voiceURI: string): number {
-  const uri = voiceURI.toLowerCase();
-  if (uri.includes('premium')) return 3;
-  if (uri.includes('enhanced')) return 2;
-  if (uri.includes('siri')) return 1;
-  return 0;
-}
-
-export type TtsEngine = 'vibevoice' | 'kokoro';
+export type TtsEngine = 'vibevoice' | 'kokoro' | 'chatterbox';
 export type AudioPlaybackSource = 'indexeddb' | 'server-cache' | TtsEngine | 'ios-native' | 'browser-fallback';
 
 type SpeakOptions = {
@@ -46,66 +35,24 @@ class AudioService {
   private lastPlaybackEvent: AudioPlaybackEvent | null = null;
   private lastRequest: { text: string; options: SpeakOptions } | null = null;
   private engine: TtsEngine = 'vibevoice';
-  private nativeVoiceIndex: Promise<Record<string, number | undefined>> | null = null;
 
   constructor() {
     // AudioContext will be lazily initialized upon first user interaction
     try {
-      if (localStorage.getItem(ENGINE_STORAGE_KEY) === 'kokoro') this.engine = 'kokoro';
+      const stored = localStorage.getItem(ENGINE_STORAGE_KEY);
+      if (stored === 'kokoro' || stored === 'chatterbox') this.engine = stored;
     } catch (e) {}
   }
 
-  /**
-   * Pick the best installed iOS English voices once: premium > enhanced > standard, en-US first.
-   * Kore/Zephyr get the top two female-or-any voices, Puck the best male voice.
-   */
-  private getNativeVoices(): Promise<Record<string, number | undefined>> {
-    if (!this.nativeVoiceIndex) {
-      this.nativeVoiceIndex = TextToSpeech.getSupportedVoices()
-        .then(({ voices }) => {
-          const english = voices
-            .map((v, index) => ({ ...v, index }))
-            .filter((v) => v.lang.toLowerCase().startsWith('en'))
-            .sort(
-              (a, b) =>
-                appleVoiceQuality(b.voiceURI) - appleVoiceQuality(a.voiceURI) ||
-                Number(b.lang === 'en-US') - Number(a.lang === 'en-US')
-            );
-          const isMale = (v: { name: string }) => APPLE_MALE_VOICES.includes(v.name.toLowerCase().split(' ')[0]);
-          const female = english.filter((v) => !isMale(v));
-          const male = english.filter(isMale);
-          return {
-            Kore: (female[0] ?? english[0])?.index,
-            Zephyr: (female[1] ?? female[0] ?? english[0])?.index,
-            Puck: (male[0] ?? english[0])?.index,
-          };
-        })
-        .catch((err) => {
-          console.warn('Could not list iOS voices, using system default:', err);
-          return {};
-        });
+  /** iOS voice id for a teacher: the user's choice, or the best installed default. */
+  private async resolveNativeVoiceId(teacher: TeacherVoiceKey): Promise<string | undefined> {
+    const chosen = getVoicePrefs()[teacher];
+    if (chosen) return chosen;
+    try {
+      return defaultVoiceFor(teacher, await listEnglishVoices())?.id;
+    } catch (e) {
+      return undefined;
     }
-    return this.nativeVoiceIndex;
-  }
-
-  private async speakNative(text: string, voice: string, slow: boolean): Promise<void> {
-    const voices = await this.getNativeVoices();
-    this.notifyPlayback({
-      word: text,
-      source: 'ios-native',
-      fromCache: false,
-      engine: this.engine,
-      timestamp: Date.now(),
-    });
-    await TextToSpeech.speak({
-      text,
-      lang: 'en-US',
-      voice: voices[voice],
-      rate: slow ? 0.7 : 0.95,
-      pitch: 1.05,
-      volume: 1.0,
-      category: 'playback',
-    });
   }
 
   public getEngine(): TtsEngine {
@@ -189,21 +136,12 @@ class AudioService {
 
     this.lastRequest = { text: cleanText, options: { ...options, regenerate: false } };
 
-    if (isNativeApp) {
-      const nativeText = options.breakdown ? `${cleanText.split('').join(', ')}. ${cleanText}!` : cleanText;
-      try {
-        await this.speakNative(nativeText, options.voiceName || 'Kore', Boolean(options.slow || options.breakdown));
-      } catch (err) {
-        console.warn('iOS native speech failed:', err);
-      }
-      return;
-    }
 
     const engine = this.engine;
     const voice = options.voiceName || 'Kore';
     // Cache key incorporates engine, voice and breakdown mode if active.
     // VibeVoice keeps the legacy (engine-less) key so existing cached audio stays valid.
-    const cacheKey = `${engine === 'vibevoice' ? '' : `${engine}_`}${voice}_${options.breakdown ? 'breakdown_' : ''}${cleanText.toLowerCase()}`;
+    const cacheKey = `${engine === 'vibevoice' || isNativeApp ? '' : `${engine}_`}${voice}_${options.breakdown ? 'breakdown_' : ''}${cleanText.toLowerCase()}`;
 
     // 1. TIER 1: Check IndexedDB Client Audio Cache first! (0 network latency) — skipped on regenerate
     if (!options.regenerate) {
@@ -231,6 +169,25 @@ class AudioService {
       // Phonics blending style: "c ... a ... t ... cat!"
       const letters = cleanText.split('').join(' . ');
       promptToSpeak = `${letters}. ${cleanText}!`;
+    }
+
+    // 3. iOS: synthesize on-device to WAV, cache it in IndexedDB, then play it
+    if (isNativeApp) {
+      const voiceId = await this.resolveNativeVoiceId(voice);
+      const rate = options.slow || options.breakdown ? NATIVE_RATE.slow : NATIVE_RATE.normal;
+      const nativeText = options.breakdown ? `${cleanText.split('').join(', ')}. ${cleanText}!` : cleanText;
+      try {
+        const { audioBase64 } = await NativeTTS.synthesize({ text: nativeText, voiceId, rate });
+        await saveAudioToCache(cacheKey, audioBase64, cleanText, voice);
+        // Notify after saving so listeners refreshing the cache count see the new audio
+        this.notifyPlayback({ word: cleanText, source: 'ios-native', fromCache: false, engine, timestamp: Date.now() });
+        await this.playBase64Wav(audioBase64);
+      } catch (err) {
+        console.warn('iOS on-device synthesis to file failed, speaking directly:', err);
+        this.notifyPlayback({ word: cleanText, source: 'ios-native', fromCache: false, engine, timestamp: Date.now() });
+        await NativeTTS.speak({ text: nativeText, voiceId, rate }).catch(console.warn);
+      }
+      return;
     }
 
     // 3. TIER 2: Call server TTS endpoint (Server checks its persistent disk cache before synthesizing)
@@ -338,7 +295,7 @@ class AudioService {
       this.currentAudioElement = null;
     }
     if (isNativeApp) {
-      TextToSpeech.stop().catch(() => {});
+      NativeTTS.stop().catch(() => {});
     } else if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
