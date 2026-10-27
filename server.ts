@@ -15,11 +15,8 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Initialize Gemini Client
-// Using active key provided by user with environment fallback
-const apiKey = process.env.GEMINI_API_KEY === 'REMOVED'
-  ? process.env.GEMINI_API_KEY
-  : 'REMOVED';
+// Initialize Gemini Client (key from .env / environment only — never hardcode it)
+const apiKey = process.env.GEMINI_API_KEY;
 
 const ai = apiKey
   ? new GoogleGenAI({
