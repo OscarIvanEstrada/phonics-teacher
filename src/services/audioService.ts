@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
-import { getAudioFromCache, saveAudioToCache } from './indexedDb';
+import { audioPath } from './audioPaths';
+import { isPublished, markGenerated, readPublishedAudio } from './publishedAudio';
 import { PhonemeSound, parsePhonetics } from './phonemes';
 import { NativeTTS, NATIVE_RATE, TeacherVoiceKey, defaultVoiceFor, getVoicePrefs, listEnglishVoices } from './nativeTts';
 
@@ -7,7 +8,7 @@ import { NativeTTS, NATIVE_RATE, TeacherVoiceKey, defaultVoiceFor, getVoicePrefs
 export const isNativeApp = Capacitor.isNativePlatform();
 
 export type TtsEngine = 'vibevoice' | 'kokoro' | 'chatterbox';
-export type AudioPlaybackSource = 'indexeddb' | 'server-cache' | TtsEngine | 'ios-native' | 'browser-fallback';
+export type AudioPlaybackSource = 'github' | TtsEngine | 'ios-native' | 'browser-fallback';
 
 type SpeakOptions = {
   voiceName?: 'Kore' | 'Puck' | 'Zephyr';
@@ -127,50 +128,58 @@ class AudioService {
   }
 
   /**
-   * Speak a word or sentence using the selected local TTS engine (with IndexedDB caching),
-   * falling back smoothly to Web Speech API if the engine is unreachable.
-   * `regenerate` skips every cache and replaces the stored audio.
+   * Find an audio in the public GitHub repo, or synthesize it.
+   * - Read: published audio (branch `audio`) for the selected engine, on web and iOS alike.
+   * - Write: on web the server synthesizes and publishes it; on iOS (which can't write to GitHub)
+   *   it is synthesized on-device and only played.
    */
+  private async getAudio(
+    request: { text: string; ipa?: string; slow?: boolean; breakdown?: boolean; regenerate?: boolean },
+    voice: TeacherVoiceKey
+  ): Promise<{ audioBase64: string; source: AudioPlaybackSource } | null> {
+    const engine = this.engine;
+    const path = audioPath({ engine, voice, ...request });
+
+    if (!request.regenerate && (await isPublished(path))) {
+      const audioBase64 = await readPublishedAudio(path);
+      if (audioBase64) return { audioBase64, source: 'github' };
+    }
+
+    if (isNativeApp) {
+      const voiceId = await this.resolveNativeVoiceId(voice);
+      const rate = request.slow ? NATIVE_RATE.slow : NATIVE_RATE.normal;
+      const { audioBase64 } = await NativeTTS.synthesize({ text: request.text, ipa: request.ipa, voiceId, rate });
+      return { audioBase64, source: 'ios-native' };
+    }
+
+    const response = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...request, voiceName: voice, engine }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data.audioBase64) return null;
+    markGenerated(data.path ?? path, data.audioBase64, Boolean(data.published));
+    return { audioBase64: data.audioBase64, source: engine };
+  }
+
   /**
    * Say one isolated phonics sound (or a blended chunk like a rime).
    * Kokoro and iOS read the IPA exactly; text-only engines read the teacher's spelling.
-   * Clips are cached per sound, so /æ/ is synthesized once and reused by every word.
+   * Each sound is one published file, so /æ/ is synthesized once and reused by every word.
    */
   public async speakSound(sound: PhonemeSound, options: { voiceName?: SpeakOptions['voiceName']; slow?: boolean } = {}): Promise<void> {
     if (!this.soundEnabled) return;
     const voice = options.voiceName || 'Kore';
-    const engineTag = isNativeApp ? 'ios' : this.engine;
-    const cacheKey = `sound_${engineTag}_${voice}_${sound.ipa}`;
-
     try {
-      const cached = await getAudioFromCache(cacheKey);
-      if (cached?.base64) {
-        await this.playBase64Wav(cached.base64);
-        return;
-      }
-    } catch (e) {}
-
-    try {
-      let audioBase64: string | undefined;
-      if (isNativeApp) {
-        const voiceId = await this.resolveNativeVoiceId(voice);
-        const rate = options.slow ? NATIVE_RATE.slow : NATIVE_RATE.normal;
-        ({ audioBase64 } = await NativeTTS.synthesize({ text: sound.spoken, ipa: sound.ipa, voiceId, rate }));
-      } else {
-        const response = await fetch('/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: sound.spoken, ipa: sound.ipa, voiceName: voice, engine: this.engine }),
-        });
-        if (response.ok) audioBase64 = (await response.json()).audioBase64;
-      }
-      if (audioBase64) {
-        await saveAudioToCache(cacheKey, audioBase64, `/${sound.symbol}/`, voice);
-        await this.playBase64Wav(audioBase64);
+      const audio = await this.getAudio({ text: sound.spoken, ipa: sound.ipa }, voice);
+      if (audio) {
+        await this.playBase64Wav(audio.audioBase64);
         return;
       }
     } catch (err) {
-      console.warn('Phoneme synthesis failed:', err);
+      console.warn('Phoneme audio failed:', err);
     }
     if (!isNativeApp) this.speakWithBrowserSpeech(sound.spoken, 0.7);
   }
@@ -188,6 +197,11 @@ class AudioService {
     await this.speakPhonicsWord(text, { voiceName: options.voiceName });
   }
 
+  /**
+   * Speak a word or sentence: published GitHub audio first, then the selected engine,
+   * falling back to the browser voice on web if everything else fails.
+   * `regenerate` skips the published copy and replaces it with a new take.
+   */
   public async speakPhonicsWord(text: string, options: SpeakOptions = {}): Promise<void> {
     if (!this.soundEnabled) return;
 
@@ -196,115 +210,50 @@ class AudioService {
     const cleanText = text.trim();
     if (!cleanText) return;
 
-    const sounds = options.breakdown && options.phonetics ? parsePhonetics(options.phonetics) : [];
-    if (sounds.length > 0) {
-      this.lastRequest = { text: cleanText, options: { ...options, regenerate: false } };
-      return this.speakBreakdown(cleanText, sounds, options);
-    }
-
     this.lastRequest = { text: cleanText, options: { ...options, regenerate: false } };
 
+    const sounds = options.breakdown && options.phonetics ? parsePhonetics(options.phonetics) : [];
+    if (sounds.length > 0) return this.speakBreakdown(cleanText, sounds, options);
 
     const engine = this.engine;
     const voice = options.voiceName || 'Kore';
-    // Cache key incorporates engine, voice and breakdown mode if active.
-    // VibeVoice keeps the legacy (engine-less) key so existing cached audio stays valid.
-    const cacheKey = `${engine === 'vibevoice' || isNativeApp ? '' : `${engine}_`}${voice}_${options.breakdown ? 'breakdown_' : ''}${cleanText.toLowerCase()}`;
+    // Without IPA, a breakdown spells the word: "c, a, t. cat!"
+    const promptToSpeak = options.breakdown ? `${cleanText.split('').join(', ')}. ${cleanText}!` : cleanText;
 
-    // 1. TIER 1: Check IndexedDB Client Audio Cache first! (0 network latency) — skipped on regenerate
-    if (!options.regenerate) {
-      try {
-        const cached = await getAudioFromCache(cacheKey);
-        if (cached && cached.base64) {
-          this.notifyPlayback({
-            word: cleanText,
-            source: 'indexeddb',
-            fromCache: true,
-            engine,
-            timestamp: Date.now(),
-          });
-          await this.playBase64Wav(cached.base64);
-          return;
-        }
-      } catch (e) {
-        console.warn('IndexedDB audio cache lookup skipped:', e);
+    try {
+      const audio = await this.getAudio(
+        {
+          text: promptToSpeak,
+          slow: Boolean(options.slow || options.breakdown),
+          breakdown: Boolean(options.breakdown),
+          regenerate: Boolean(options.regenerate),
+        },
+        voice
+      );
+      if (audio) {
+        this.notifyPlayback({
+          word: cleanText,
+          source: audio.source,
+          fromCache: audio.source === 'github',
+          engine,
+          timestamp: Date.now(),
+        });
+        await this.playBase64Wav(audio.audioBase64);
+        return;
       }
+    } catch (err) {
+      console.warn(`${engine} audio failed:`, err);
     }
 
-    // 2. Prepare text for teacher pronunciation
-    let promptToSpeak = cleanText;
-    if (options.breakdown) {
-      // Phonics blending style: "c ... a ... t ... cat!"
-      const letters = cleanText.split('').join(' . ');
-      promptToSpeak = `${letters}. ${cleanText}!`;
-    }
-
-    // 3. iOS: synthesize on-device to WAV, cache it in IndexedDB, then play it
     if (isNativeApp) {
+      // Last resort on iOS: speak directly with the system voice
       const voiceId = await this.resolveNativeVoiceId(voice);
-      const rate = options.slow || options.breakdown ? NATIVE_RATE.slow : NATIVE_RATE.normal;
-      const nativeText = options.breakdown ? `${cleanText.split('').join(', ')}. ${cleanText}!` : cleanText;
-      try {
-        const { audioBase64 } = await NativeTTS.synthesize({ text: nativeText, voiceId, rate });
-        await saveAudioToCache(cacheKey, audioBase64, cleanText, voice);
-        // Notify after saving so listeners refreshing the cache count see the new audio
-        this.notifyPlayback({ word: cleanText, source: 'ios-native', fromCache: false, engine, timestamp: Date.now() });
-        await this.playBase64Wav(audioBase64);
-      } catch (err) {
-        console.warn('iOS on-device synthesis to file failed, speaking directly:', err);
-        this.notifyPlayback({ word: cleanText, source: 'ios-native', fromCache: false, engine, timestamp: Date.now() });
-        await NativeTTS.speak({ text: nativeText, voiceId, rate }).catch(console.warn);
-      }
+      this.notifyPlayback({ word: cleanText, source: 'ios-native', fromCache: false, engine, timestamp: Date.now() });
+      await NativeTTS.speak({ text: promptToSpeak, voiceId, rate: NATIVE_RATE.normal }).catch(console.warn);
       return;
     }
 
-    // 3. TIER 2: Call server TTS endpoint (Server checks its persistent disk cache before synthesizing)
-    try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: promptToSpeak,
-          voiceName: voice,
-          engine,
-          regenerate: Boolean(options.regenerate),
-          style: options.slow
-            ? 'Slow, distinct elementary school phonics teacher enunciation for children aged 7-11'
-            : 'Enthusiastic, clear, warm elementary school teacher pronouncing English phonics for children aged 7-11',
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.audioBase64) {
-          // Save (or overwrite, when regenerating) in IndexedDB so the client never re-synthesizes this audio
-          saveAudioToCache(cacheKey, data.audioBase64, cleanText, voice).catch(console.warn);
-
-          const source: AudioPlaybackSource = data.fromCache ? 'server-cache' : engine;
-          this.notifyPlayback({
-            word: cleanText,
-            source,
-            fromCache: Boolean(data.fromCache),
-            engine,
-            timestamp: Date.now(),
-          });
-
-          await this.playBase64Wav(data.audioBase64);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn(`${engine} TTS fetch failed, switching to browser speech synthesis:`, err);
-    }
-
-    // 4. TIER 3 Fallback: Browser Web Speech API
-    this.notifyPlayback({
-      word: cleanText,
-      source: 'browser-fallback',
-      fromCache: false,
-      engine,
-      timestamp: Date.now(),
-    });
+    this.notifyPlayback({ word: cleanText, source: 'browser-fallback', fromCache: false, engine, timestamp: Date.now() });
     this.speakWithBrowserSpeech(promptToSpeak, options.slow ? 0.75 : 0.9);
   }
 

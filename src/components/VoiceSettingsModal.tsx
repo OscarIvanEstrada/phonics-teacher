@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Play, Square, X } from 'lucide-react';
 import { TEACHER_PROFILES } from './TeacherAvatar';
-import { deleteAudioCacheByPrefix } from '../services/indexedDb';
-import { audioService } from '../services/audioService';
+import { audioService, TtsEngine } from '../services/audioService';
 import {
   NativeTTS,
   NativeVoice,
@@ -17,8 +16,8 @@ import {
 interface VoiceSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Called after a voice change cleared that teacher's cached audio */
-  onCacheChanged: () => void;
+  /** The published-audio engine was changed here (App keeps the counter in sync) */
+  onEngineChange: (engine: TtsEngine) => void;
 }
 
 const PREVIEW_TEXT = 'Hello, friend! Let us read together: cat, hat, bat. Great job!';
@@ -31,12 +30,18 @@ const QUALITY_LABEL: Record<NativeVoice['quality'], { text: string; className: s
 
 const TEACHERS = Object.values(TEACHER_PROFILES);
 
-export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, onClose, onCacheChanged }) => {
+export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, onClose, onEngineChange }) => {
   const [voices, setVoices] = useState<NativeVoice[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [teacher, setTeacher] = useState<TeacherVoiceKey>(TEACHERS[0].voice);
   const [prefs, setPrefs] = useState(getVoicePrefs());
   const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const [engine, setEngine] = useState<TtsEngine>(audioService.getEngine());
+
+  const chooseEngine = (value: TtsEngine) => {
+    onEngineChange(value);
+    setEngine(value);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -64,13 +69,10 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
     setPreviewingId((current) => (current === voice.id ? null : current));
   };
 
-  const choose = async (voice: NativeVoice) => {
+  const choose = (voice: NativeVoice) => {
     if (voice.id === selectedId && prefs[teacher]) return;
     setVoicePref(teacher, voice.id);
     setPrefs(getVoicePrefs());
-    // Saved audio for this teacher used the old voice: drop it so it is re-recorded with the new one
-    await deleteAudioCacheByPrefix(`${teacher}_`);
-    onCacheChanged();
   };
 
   return (
@@ -88,6 +90,25 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Which published GitHub audio to play; the iPhone voice below is used when one is missing */}
+        <div className="px-4 pt-4">
+          <div className="text-xs font-bold text-slate-500 mb-1.5">Audios publicados en GitHub</div>
+          <div className="flex gap-2">
+            {(['vibevoice', 'kokoro', 'chatterbox'] as TtsEngine[]).map((value) => (
+              <button
+                key={value}
+                onClick={() => chooseEngine(value)}
+                className={`px-3 py-1.5 rounded-full text-sm font-bold capitalize ${
+                  engine === value ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">Si un audio aún no está publicado, se usa la voz del iPhone elegida abajo.</div>
         </div>
 
         <div className="flex gap-2 px-4 pt-4 overflow-x-auto">

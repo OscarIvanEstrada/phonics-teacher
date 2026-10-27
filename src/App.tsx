@@ -13,13 +13,14 @@ import { WordSortActivity } from './components/WordSortActivity';
 import { SortQuiz } from './components/SortQuiz';
 import { WordSort } from './data/course';
 import { getCourseProgress, nextSort, saveSortResult } from './services/course';
+import { loadPublishedAudio, subscribePublishedAudio } from './services/publishedAudio';
+import { wordFromPath } from './services/audioPaths';
 import { PhonicsWord, UserStats } from './types/phonics';
 import { BLACKBOARD_GROUPS } from './data/blackboardGroups';
 import {
   getUserStats,
   saveUserStats,
   getAllWordMastery,
-  getAudioCacheStats,
   WordMasteryRecord,
 } from './services/indexedDb';
 import { audioService, AudioPlaybackEvent, TtsEngine, isNativeApp } from './services/audioService';
@@ -74,15 +75,22 @@ export default function App() {
   const [masteryMap, setMasteryMap] = useState<Record<string, WordMasteryRecord>>({});
   const [teacherMood, setTeacherMood] = useState<TeacherMood>('teaching');
 
-  const refreshAudioCacheData = async () => {
-    try {
-      const stats = await getAudioCacheStats();
-      setCachedAudioCount(stats.count);
-      setCachedAudioKeys(new Set(stats.items.map((i) => i.key)));
-    } catch (e) {
-      console.warn(e);
-    }
-  };
+  // Counter and "saved" markers come from the audio published on GitHub for the active engine
+  useEffect(() => {
+    loadPublishedAudio();
+    return subscribePublishedAudio((paths) => {
+      const forEngine = [...paths].filter((p) => p.startsWith(`audio/${ttsEngine}/`));
+      setCachedAudioCount(forEngine.length);
+      setCachedAudioKeys(
+        new Set(
+          forEngine
+            .map(wordFromPath)
+            .filter((w): w is NonNullable<ReturnType<typeof wordFromPath>> => w !== null)
+            .map((w) => `${w.voice}_${w.word}`)
+        )
+      );
+    });
+  }, [ttsEngine]);
 
   // Load persistence from IndexedDB
   useEffect(() => {
@@ -94,8 +102,6 @@ export default function App() {
 
         const mastery = await getAllWordMastery();
         setMasteryMap(mastery);
-
-        await refreshAudioCacheData();
       } catch (err) {
         console.warn('Error loading initial data from IndexedDB:', err);
       }
@@ -105,7 +111,6 @@ export default function App() {
     // Subscribe to real-time audio playback events
     const unsubscribe = audioService.subscribePlayback((event) => {
       setLastPlaybackEvent(event);
-      refreshAudioCacheData();
     });
 
     return () => unsubscribe();
@@ -219,7 +224,7 @@ export default function App() {
           <div className="text-xs">
             <div className="font-teacher font-bold text-amber-300">
               {lastPlaybackEvent.fromCache
-                ? 'Audio desde Memoria (0 Consumo API)'
+                ? 'Audio publicado en GitHub'
                 : lastPlaybackEvent.source === 'browser-fallback'
                 ? 'Voz del Navegador (Respaldo activo)'
                 : lastPlaybackEvent.source === 'ios-native'
@@ -228,10 +233,8 @@ export default function App() {
             </div>
             <div className="text-slate-300 font-medium">
               Palabra: "{lastPlaybackEvent.word}" •{' '}
-              {lastPlaybackEvent.source === 'indexeddb'
-                ? 'IndexedDB Local'
-                : lastPlaybackEvent.source === 'server-cache'
-                ? 'Caché en Servidor'
+              {lastPlaybackEvent.source === 'github'
+                ? `GitHub · ${ENGINE_LABELS[lastPlaybackEvent.engine]}`
                 : lastPlaybackEvent.source === 'vibevoice'
                 ? 'VibeVoice TTS'
                 : lastPlaybackEvent.source === 'kokoro'
@@ -288,7 +291,7 @@ export default function App() {
       <VoiceSettingsModal
         isOpen={isVoiceSettingsOpen}
         onClose={() => setIsVoiceSettingsOpen(false)}
-        onCacheChanged={refreshAudioCacheData}
+        onEngineChange={handleEngineChange}
       />
 
       {/* Main Container */}

@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { AUDIO_BRANCH, AUDIO_REPO, audioPath } from './src/services/audioPaths';
 
 dotenv.config();
 
@@ -29,8 +30,6 @@ const ai = apiKey
     })
   : null;
 
-import fs from 'fs';
-import crypto from 'crypto';
 
 // Local TTS sidecars (vector/tts-engine), one process per engine
 type TtsEngine = 'vibevoice' | 'kokoro' | 'chatterbox';
@@ -53,19 +52,70 @@ const TTS_ENGINES: Record<TtsEngine, { url: string; lang: string; voices: Record
   },
 };
 
-// Setup persistent disk audio cache
-const AUDIO_CACHE_DIR = path.resolve(__dirname, '.audio_cache');
-if (!fs.existsSync(AUDIO_CACHE_DIR)) {
-  fs.mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
+// ==========================================
+// Audio publishing: every generated WAV is committed to the public repo's `audio` branch,
+// where the web and iOS apps read it (see src/services/audioPaths.ts).
+// ==========================================
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_API = `https://api.github.com/repos/${AUDIO_REPO}`;
+
+async function github(pathname: string, init: RequestInit = {}) {
+  return fetch(`${GITHUB_API}${pathname}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${GITHUB_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(init.headers || {}),
+    },
+  });
 }
 
-function getCacheFilePath(text: string, voiceName: string, style: string | undefined, engine: TtsEngine): string {
-  const normalizedStyle = style ? style.trim().toLowerCase() : 'default';
-  const hash = crypto
-    .createHash('sha256')
-    .update(`${engine}:${voiceName.toLowerCase()}:${normalizedStyle}:${text.trim().toLowerCase()}`)
-    .digest('hex');
-  return path.join(AUDIO_CACHE_DIR, `${hash}.json`);
+let audioBranchReady: Promise<void> | null = null;
+
+/** Create the `audio` branch from main the first time (an orphan-like branch would need the Git Data API). */
+function ensureAudioBranch(): Promise<void> {
+  if (!audioBranchReady) {
+    audioBranchReady = (async () => {
+      const existing = await github(`/git/ref/heads/${AUDIO_BRANCH}`);
+      if (existing.ok) return;
+      const main = await github('/git/ref/heads/main');
+      if (!main.ok) throw new Error(`Cannot read main branch: ${main.status}`);
+      const { object } = await main.json();
+      const created = await github('/git/refs', {
+        method: 'POST',
+        body: JSON.stringify({ ref: `refs/heads/${AUDIO_BRANCH}`, sha: object.sha }),
+      });
+      if (!created.ok && created.status !== 422) throw new Error(`Cannot create ${AUDIO_BRANCH} branch: ${created.status}`);
+    })().catch((err) => {
+      audioBranchReady = null;
+      throw err;
+    });
+  }
+  return audioBranchReady;
+}
+
+// Commits to one branch must be sequential, or GitHub rejects them with 409 conflicts
+let publishQueue: Promise<unknown> = Promise.resolve();
+
+function publishAudio(filePath: string, audioBase64: string, message: string): Promise<boolean> {
+  if (!GITHUB_TOKEN) return Promise.resolve(false);
+  const task = publishQueue.then(async () => {
+    await ensureAudioBranch();
+    const current = await github(`/contents/${filePath}?ref=${AUDIO_BRANCH}`);
+    const sha = current.ok ? (await current.json()).sha : undefined;
+    const res = await github(`/contents/${filePath}`, {
+      method: 'PUT',
+      body: JSON.stringify({ message, content: audioBase64, branch: AUDIO_BRANCH, ...(sha ? { sha } : {}) }),
+    });
+    if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    return true;
+  });
+  publishQueue = task.catch(() => {});
+  return task.catch((err) => {
+    console.warn('Audio publish to GitHub failed:', filePath, err.message);
+    return false;
+  });
 }
 
 let lastTtsStatus: 'working' | 'unavailable' | 'unknown' = 'unknown';
@@ -76,6 +126,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     hasGeminiKey: Boolean(apiKey),
+    audioPublishing: GITHUB_TOKEN ? `github:${AUDIO_REPO}@${AUDIO_BRANCH}` : 'disabled (set GITHUB_TOKEN)',
     ttsEngines: Object.fromEntries(Object.entries(TTS_ENGINES).map(([k, v]) => [k, v.url])),
     ttsStatus: lastTtsStatus,
     ttsError: lastTtsError,
@@ -83,46 +134,10 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// TTS Cache Stats Endpoint
-app.get('/api/tts/stats', (_req: Request, res: Response) => {
-  try {
-    const files = fs.readdirSync(AUDIO_CACHE_DIR).filter((f) => f.endsWith('.json'));
-    let totalBytes = 0;
-    files.forEach((f) => {
-      try {
-        totalBytes += fs.statSync(path.join(AUDIO_CACHE_DIR, f)).size;
-      } catch (e) {}
-    });
-    res.json({
-      cachedAudiosCount: files.length,
-      cacheSizeBytes: totalBytes,
-    });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Clear Server Audio Cache Endpoint
-app.post('/api/tts/clear-cache', (_req: Request, res: Response) => {
-  try {
-    const files = fs.readdirSync(AUDIO_CACHE_DIR);
-    let removed = 0;
-    files.forEach((f) => {
-      try {
-        fs.unlinkSync(path.join(AUDIO_CACHE_DIR, f));
-        removed++;
-      } catch (e) {}
-    });
-    res.json({ success: true, removedCount: removed });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// VibeVoice Text-to-Speech Endpoint with Multi-Tier Storage Cache
+// Text-to-Speech Endpoint: synthesize with the selected sidecar, then publish to GitHub
 app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { text, voiceName = 'Kore', style, regenerate = false, ipa } = req.body;
+    const { text, voiceName = 'Kore', style, regenerate = false, ipa, slow = false, breakdown = false } = req.body;
     const engine: TtsEngine = req.body.engine in TTS_ENGINES ? req.body.engine : 'vibevoice';
     const engineCfg = TTS_ENGINES[engine];
 
@@ -131,34 +146,11 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const defaultStyle =
-      'Enthusiastic, clear, warm elementary school teacher pronouncing English phonics for children aged 7-11. Crisp enunciation.';
-
     // Isolated phonics sounds: Kokoro reads the IPA itself; other engines read the teacher's spelling in `text`
     const usePhonemes = typeof ipa === 'string' && ipa.length > 0 && engine === 'kokoro';
-    const cacheFilePath = getCacheFilePath(text, voiceName, ipa ? `ipa:${ipa}` : style, engine);
+    const filePath = audioPath({ engine, voice: voiceName, text, ipa, slow, breakdown });
 
-    // 1. TIER 1: Check Server Persistent Disk Cache (skipped when regenerating a bad take)
-    if (!regenerate && fs.existsSync(cacheFilePath)) {
-      try {
-        const cachedRaw = fs.readFileSync(cacheFilePath, 'utf-8');
-        const cachedData = JSON.parse(cachedRaw);
-        if (cachedData.audioBase64) {
-          res.json({
-            audioBase64: cachedData.audioBase64,
-            mimeType: 'audio/wav',
-            word: text,
-            fromCache: true,
-            source: 'server-disk-cache',
-          });
-          return;
-        }
-      } catch (readErr) {
-        console.warn('Failed reading cache file, regenerating:', readErr);
-      }
-    }
-
-    // 2. TIER 2: If not in server cache, call the selected local TTS sidecar
+    // Readers check GitHub before calling here, so this always synthesizes (also on regenerate)
     const engineVoice = engineCfg.voices[voiceName] || voiceName.toLowerCase();
     const ttsRes = await fetch(`${engineCfg.url}/tts`, {
       method: 'POST',
@@ -168,7 +160,7 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
         ...(usePhonemes ? { phonemes: ipa } : {}),
         voice: engineVoice,
         lang: engineCfg.lang,
-        speed: style && /slow/i.test(style) ? 0.8 : 1.0,
+        speed: slow || (style && /slow/i.test(style)) ? 0.8 : 1.0,
       }),
     });
 
@@ -183,22 +175,8 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 3. Save to server persistent disk cache to prevent ANY future redundant consumption
-    try {
-      fs.writeFileSync(
-        cacheFilePath,
-        JSON.stringify({
-          word: text,
-          voiceName,
-          engine,
-          style: style || defaultStyle,
-          audioBase64: base64Audio,
-          createdAt: Date.now(),
-        })
-      );
-    } catch (writeErr) {
-      console.warn('Failed writing audio to disk cache:', writeErr);
-    }
+    // Publish in the background: the child hears the audio now, the commit follows
+    void publishAudio(filePath, base64Audio, `${regenerate ? 'regenerate' : 'add'} ${filePath} (${engine}, ${voiceName})`);
 
     lastTtsStatus = 'working';
     lastTtsError = null;
@@ -209,6 +187,8 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
       word: text,
       fromCache: false,
       source: engine,
+      path: filePath,
+      published: Boolean(GITHUB_TOKEN),
     });
   } catch (error: any) {
     lastTtsStatus = 'unavailable';
