@@ -1,0 +1,6 @@
+{
+  "name": "Phonics Teacher - Kids English Sounds & Pronunciation",
+  "description": "Interactive English phonics learning app for children aged 7-11 with Gemini TTS, IndexedDB word tracking, pronunciation games, and motivating classroom rewards.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
