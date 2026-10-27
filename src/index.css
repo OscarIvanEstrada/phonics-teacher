@@ -46,3 +46,10 @@
 .animate-twinkle {
   animation: star-twinkle 2s ease-in-out infinite;
 }
+
+/* Wrong column in a word sort */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}

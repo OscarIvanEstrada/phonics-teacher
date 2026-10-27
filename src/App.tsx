@@ -8,8 +8,13 @@ import { SoundCatchGame } from './components/SoundCatchGame';
 import { RewardsAndStickers } from './components/RewardsAndStickers';
 import { AudioCacheModal } from './components/AudioCacheModal';
 import { VoiceSettingsModal } from './components/VoiceSettingsModal';
+import { CourseMap } from './components/CourseMap';
+import { WordSortActivity } from './components/WordSortActivity';
+import { SortQuiz } from './components/SortQuiz';
+import { WordSort } from './data/course';
+import { getCourseProgress, nextSort, saveSortResult } from './services/course';
 import { PhonicsWord, UserStats } from './types/phonics';
-import { PHONICS_GROUPS } from './data/phonicsCurriculum';
+import { BLACKBOARD_GROUPS } from './data/blackboardGroups';
 import {
   getUserStats,
   saveUserStats,
@@ -26,9 +31,11 @@ const ENGINE_LABELS: Record<TtsEngine, string> = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('pizarra');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('curso');
+  const [openSort, setOpenSort] = useState<WordSort | null>(null);
+  const [courseProgress, setCourseProgress] = useState(getCourseProgress());
   const [selectedGroupIndex, setSelectedGroupIndex] = useState<number>(0);
-  const [selectedFamilyId, setSelectedFamilyId] = useState<string>('family-an');
+  const [selectedFamilyId, setSelectedFamilyId] = useState<string>('sort-1');
   const [selectedWordForVoice, setSelectedWordForVoice] = useState<PhonicsWord | null>(null);
 
   const [isAudioCacheModalOpen, setIsAudioCacheModalOpen] = useState<boolean>(false);
@@ -175,7 +182,7 @@ export default function App() {
         };
       default:
         return {
-          en: `Let us explore the ${PHONICS_GROUPS[selectedGroupIndex]?.title.split('.')[1] || 'short vowels'}! Blend onset and rime together.`,
+          en: `Let us explore the ${BLACKBOARD_GROUPS[selectedGroupIndex]?.title.split('.')[1]?.trim() || 'short vowels'}! Blend onset and rime together.`,
           es: '¡Exploremos las familias de palabras! Toca para escuchar y fusionar cada sonido.',
         };
     }
@@ -298,6 +305,24 @@ export default function App() {
             });
           }}
         />
+
+        {/* Course: units → word sorts */}
+        {activeTab === 'curso' &&
+          (openSort ? (
+            React.createElement(openSort.mode === 'sort' ? WordSortActivity : SortQuiz, {
+              key: openSort.id,
+              sort: openSort,
+              teacherVoice: currentTeacher.voice,
+              onBack: () => setOpenSort(null),
+              onComplete: (stars: number, score?: number) => {
+                setCourseProgress(saveSortResult(openSort.id, stars, score));
+                handleStarsEarned(stars);
+              },
+              onNext: nextSort(openSort) ? () => setOpenSort(nextSort(openSort)!) : undefined,
+            })
+          ) : (
+            <CourseMap progress={courseProgress} onOpenSort={setOpenSort} />
+          ))}
 
         {/* Tab 1: Pizarra Fonética (Curriculum Core) */}
         {activeTab === 'pizarra' && (

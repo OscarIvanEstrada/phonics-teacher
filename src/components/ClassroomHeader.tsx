@@ -11,12 +11,11 @@ import {
   Star,
   Users,
   Database,
-  Zap,
-} from 'lucide-react';
+  Zap, GraduationCap } from 'lucide-react';
 import { UserStats } from '../types/phonics';
 import { TEACHER_PROFILES } from './TeacherAvatar';
 
-export type ActiveTab = 'pizarra' | 'micro' | 'lab' | 'juego' | 'premios';
+export type ActiveTab = 'curso' | 'pizarra' | 'micro' | 'lab' | 'juego' | 'premios';
 
 interface ClassroomHeaderProps {
   activeTab: ActiveTab;
@@ -40,6 +39,14 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
   const currentTeacher = TEACHER_PROFILES[userStats.selectedTeacher] || TEACHER_PROFILES.spark;
 
   const tabs = [
+    {
+      id: 'curso' as ActiveTab,
+      label: 'Curso',
+      badge: '42 Sorts',
+      icon: GraduationCap,
+      color: 'hover:bg-indigo-100 text-indigo-900',
+      activeClass: 'bg-indigo-600 text-white shadow-md',
+    },
     {
       id: 'pizarra' as ActiveTab,
       label: 'Pizarra de Sonidos',

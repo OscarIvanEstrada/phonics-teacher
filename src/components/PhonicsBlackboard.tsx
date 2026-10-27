@@ -8,7 +8,7 @@ import {
   Lightbulb,
   CheckCircle2,
 } from 'lucide-react';
-import { PHONICS_GROUPS } from '../data/phonicsCurriculum';
+import { BLACKBOARD_GROUPS as PHONICS_GROUPS } from '../data/blackboardGroups';
 import { PhonicsWord, WordFamily } from '../types/phonics';
 import { audioService } from '../services/audioService';
 import { splitOnsetRime } from '../services/phonemes';
@@ -369,9 +369,11 @@ export const PhonicsBlackboard: React.FC<PhonicsBlackboardProps> = ({
                   </div>
 
                   {/* Sample Sentence */}
-                  <p className="text-xs text-slate-200 italic leading-snug line-clamp-2 mb-3">
-                    "{item.exampleSentence}"
-                  </p>
+                  {item.exampleSentence && (
+                    <p className="text-xs text-slate-200 italic leading-snug line-clamp-2 mb-3">
+                      "{item.exampleSentence}"
+                    </p>
+                  )}
 
                   {/* Action Bar */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
