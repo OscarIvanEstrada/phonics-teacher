@@ -56,7 +56,7 @@ export const AudioCacheModal: React.FC<AudioCacheModalProps> = ({ isOpen, onClos
             <div>
               <h3 className="font-teacher font-extrabold text-xl leading-tight">Audios publicados</h3>
               <p className="text-xs text-slate-300">
-                {AUDIO_REPO} · rama <code>{AUDIO_BRANCH}</code>
+                {AUDIO_REPO} · <code>audio/</code> en <code>{AUDIO_BRANCH}</code>
               </p>
             </div>
           </div>

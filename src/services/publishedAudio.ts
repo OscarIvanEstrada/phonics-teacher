@@ -1,7 +1,7 @@
 import { AUDIO_RAW_BASE, AUDIO_TREE_URL } from './audioPaths';
 
 /**
- * Audio published in the public GitHub repo (branch `audio`).
+ * Audio published in the public GitHub repo (folder audio/ on main).
  * The file list is fetched once per session (one GitHub API call); files are then read from
  * raw.githubusercontent.com only when listed, so there are no blind 404 requests.
  */
@@ -24,7 +24,7 @@ export function loadPublishedAudio(): Promise<Set<string>> {
       .then((res) => (res.ok ? res.json() : { tree: [] }))
       .then((data: { tree?: Array<{ path: string; type: string }> }) => {
         for (const entry of data.tree ?? []) {
-          if (entry.type === 'blob' && entry.path.endsWith('.wav')) published.add(entry.path);
+          if (entry.type === 'blob' && entry.path.startsWith('audio/') && entry.path.endsWith('.wav')) published.add(entry.path);
         }
         notify();
         return published;

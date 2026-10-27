@@ -1,5 +1,5 @@
 /**
- * Where each generated audio lives in the public GitHub repo (branch `audio`).
+ * Where each generated audio lives in the public GitHub repo (folder audio/ on main).
  * Shared by the browser, the iOS app (readers) and server.ts (writer), so all compute the same path.
  *
  *   audio/<engine>/<voice>/words/<word>[.slow][.breakdown].wav   single words: readable names
@@ -8,7 +8,7 @@
  */
 
 export const AUDIO_REPO = 'OscarIvanEstrada/phonics-teacher';
-export const AUDIO_BRANCH = 'audio';
+export const AUDIO_BRANCH = 'main';
 export const AUDIO_RAW_BASE = `https://raw.githubusercontent.com/${AUDIO_REPO}/${AUDIO_BRANCH}/`;
 export const AUDIO_TREE_URL = `https://api.github.com/repos/${AUDIO_REPO}/git/trees/${AUDIO_BRANCH}?recursive=1`;
 

@@ -53,7 +53,7 @@ const TTS_ENGINES: Record<TtsEngine, { url: string; lang: string; voices: Record
 };
 
 // ==========================================
-// Audio publishing: every generated WAV is committed to the public repo's `audio` branch,
+// Audio publishing: every generated WAV is committed to the public repo (audio/ on main),
 // where the web and iOS apps read it (see src/services/audioPaths.ts).
 // ==========================================
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -73,7 +73,7 @@ async function github(pathname: string, init: RequestInit = {}) {
 
 let audioBranchReady: Promise<void> | null = null;
 
-/** Create the `audio` branch from main the first time (an orphan-like branch would need the Git Data API). */
+/** Make sure the target branch exists (creates it from main when AUDIO_BRANCH is not main). */
 function ensureAudioBranch(): Promise<void> {
   if (!audioBranchReady) {
     audioBranchReady = (async () => {
@@ -137,7 +137,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // Text-to-Speech Endpoint: synthesize with the selected sidecar, then publish to GitHub
 app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { text, voiceName = 'Kore', style, regenerate = false, ipa, slow = false, breakdown = false } = req.body;
+    const { text, voiceName = 'Kore', style, regenerate = false, ipa, slow = false, breakdown = false, publish = true } = req.body;
     const engine: TtsEngine = req.body.engine in TTS_ENGINES ? req.body.engine : 'vibevoice';
     const engineCfg = TTS_ENGINES[engine];
 
@@ -175,8 +175,9 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Publish in the background: the child hears the audio now, the commit follows
-    void publishAudio(filePath, base64Audio, `${regenerate ? 'regenerate' : 'add'} ${filePath} (${engine}, ${voiceName})`);
+    // Publish in the background: the child hears the audio now, the commit follows.
+    // `publish: false` is for scripts/generate-course-audio.ts, which commits everything at once.
+    if (publish) void publishAudio(filePath, base64Audio, `${regenerate ? 'regenerate' : 'add'} ${filePath} (${engine}, ${voiceName})`);
 
     lastTtsStatus = 'working';
     lastTtsError = null;
@@ -188,7 +189,7 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
       fromCache: false,
       source: engine,
       path: filePath,
-      published: Boolean(GITHUB_TOKEN),
+      published: Boolean(GITHUB_TOKEN) && publish,
     });
   } catch (error: any) {
     lastTtsStatus = 'unavailable';

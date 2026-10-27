@@ -40,13 +40,14 @@ class AudioService {
   private listeners: Set<AudioListener> = new Set();
   private lastPlaybackEvent: AudioPlaybackEvent | null = null;
   private lastRequest: { text: string; options: SpeakOptions } | null = null;
-  private engine: TtsEngine = 'vibevoice';
+  // Kokoro is the default: it reads the IPA exactly and the course audio is pre-published with it
+  private engine: TtsEngine = 'kokoro';
 
   constructor() {
     // AudioContext will be lazily initialized upon first user interaction
     try {
       const stored = localStorage.getItem(ENGINE_STORAGE_KEY);
-      if (stored === 'kokoro' || stored === 'chatterbox') this.engine = stored;
+      if (stored === 'vibevoice' || stored === 'chatterbox' || stored === 'kokoro') this.engine = stored;
     } catch (e) {}
   }
 
