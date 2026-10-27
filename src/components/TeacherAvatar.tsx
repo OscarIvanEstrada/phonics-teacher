@@ -8,7 +8,6 @@ interface TeacherAvatarProps {
   teacherId: 'spark' | 'maya' | 'owl';
   mood?: TeacherMood;
   speechText?: string;
-  speechTextEs?: string;
   onSpeak?: () => void;
   compact?: boolean;
 }
@@ -16,33 +15,33 @@ interface TeacherAvatarProps {
 export const TEACHER_PROFILES = {
   spark: {
     id: 'spark' as const,
-    name: 'Profesor Spark',
-    title: 'Científico de los Sonidos',
+    name: 'Professor Spark',
+    title: 'Sound Scientist',
     emoji: '👨‍🏫',
     avatarBg: 'bg-emerald-500',
     borderColor: 'border-emerald-300',
     voice: 'Puck' as const,
-    catchphrase: '¡Descubramos el misterio de los sonidos juntos!',
+    catchphrase: 'Let us discover the magic of sounds together!',
   },
   maya: {
     id: 'maya' as const,
     name: 'Teacher Maya',
-    title: 'Maestra de Pronunciación',
+    title: 'Pronunciation Teacher',
     emoji: '👩‍🏫',
     avatarBg: 'bg-violet-500',
     borderColor: 'border-violet-300',
     voice: 'Kore' as const,
-    catchphrase: '¡Habla fuerte y sonríe, eres un gran lector!',
+    catchphrase: 'Speak up and smile, you are a great reader!',
   },
   owl: {
     id: 'owl' as const,
     name: 'Mr. Wise Owl',
-    title: 'Director de la Academia',
+    title: 'Head of the Academy',
     emoji: '🦉',
     avatarBg: 'bg-amber-600',
     borderColor: 'border-amber-300',
     voice: 'Zephyr' as const,
-    catchphrase: '¡La sabiduría se construye sonido por sonido!',
+    catchphrase: 'Wisdom is built sound by sound!',
   },
 };
 
@@ -50,7 +49,6 @@ export const TeacherAvatar: React.FC<TeacherAvatarProps> = ({
   teacherId = 'spark',
   mood = 'teaching',
   speechText = 'Welcome to class! Let us practice English phonics!',
-  speechTextEs = '¡Bienvenido a clase! ¡Practiquemos la fonética en inglés!',
   onSpeak,
   compact = false,
 }) => {
@@ -71,37 +69,37 @@ export const TeacherAvatar: React.FC<TeacherAvatarProps> = ({
       case 'speaking':
         return (
           <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold animate-pulse">
-            <Volume2 className="w-3 h-3 text-emerald-600" /> Hablando...
+            <Volume2 className="w-3 h-3 text-emerald-600" /> Speaking...
           </span>
         );
       case 'listening':
         return (
           <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-red-500"></span> ¡Escuchándote!
+            <span className="w-2 h-2 rounded-full bg-red-500"></span> Listening to you!
           </span>
         );
       case 'celebrating':
         return (
           <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
-            <Sparkles className="w-3 h-3 text-amber-500" /> ¡Sensacional!
+            <Sparkles className="w-3 h-3 text-amber-500" /> Awesome!
           </span>
         );
       case 'thinking':
         return (
           <span className="inline-flex items-center gap-1 text-xs bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-bold">
-            💡 Pensando con IA...
+            💡 Thinking with AI...
           </span>
         );
       case 'encouraging':
         return (
           <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-            <Award className="w-3 h-3 text-emerald-600" /> ¡Tú puedes lograrlo!
+            <Award className="w-3 h-3 text-emerald-600" /> You can do it!
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
-            <Smile className="w-3 h-3 text-amber-600" /> En clase
+            <Smile className="w-3 h-3 text-amber-600" /> In class
           </span>
         );
     }
@@ -121,7 +119,7 @@ export const TeacherAvatar: React.FC<TeacherAvatarProps> = ({
             <span className="font-teacher font-bold text-slate-800 text-sm">{teacher.name}</span>
             {getMoodBadge()}
           </div>
-          <p className="text-xs text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs">{speechTextEs}</p>
+          <p className="text-xs text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs">{speechText}</p>
         </div>
       </div>
     );
@@ -160,16 +158,11 @@ export const TeacherAvatar: React.FC<TeacherAvatarProps> = ({
           {getMoodBadge()}
         </div>
 
-        {/* English Pronunciation & Spanish helper */}
+        {/* English sentence */}
         <div className="my-1.5 space-y-1">
           <p className="text-slate-800 font-bold text-base sm:text-lg tracking-wide font-teacher leading-snug">
             "{speechText}"
           </p>
-          {speechTextEs && (
-            <p className="text-slate-500 text-xs sm:text-sm font-medium italic">
-              {speechTextEs}
-            </p>
-          )}
         </div>
 
         {/* Hear Teacher Audio Button */}
@@ -177,13 +170,13 @@ export const TeacherAvatar: React.FC<TeacherAvatarProps> = ({
           <button
             onClick={handleSpeech}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-teacher font-bold text-xs shadow transition-all duration-150 cursor-pointer"
-            title="Escuchar al profesor en voz alta con voz del profesor IA"
+            title="Hear the teacher read this out loud"
           >
             <Volume2 className="w-3.5 h-3.5 animate-pulse" />
-            <span>Escuchar al Profesor</span>
+            <span>Hear the Teacher</span>
           </button>
           <span className="text-[11px] text-amber-800/70 font-semibold hidden md:inline">
-            Voz de Kokoro y Chatterbox
+            Kokoro & Chatterbox voices
           </span>
         </div>
       </div>

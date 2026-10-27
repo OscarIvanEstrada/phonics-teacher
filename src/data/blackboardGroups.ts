@@ -4,7 +4,7 @@ import { PHONICS_GROUPS } from './phonicsCurriculum';
 import { getCourseWord } from '../services/course';
 
 /**
- * Groups shown on the Pizarra de Sonidos: one group per course unit with one "family" per sort,
+ * Groups shown on the Sound Blackboard: one group per course unit with one "family" per sort,
  * followed by the original short-vowel families.
  */
 

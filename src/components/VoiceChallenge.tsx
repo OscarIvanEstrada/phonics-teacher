@@ -119,7 +119,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
           {/* Top Instruction */}
           <div className="inline-flex items-center gap-2 bg-emerald-950/70 text-emerald-200 border border-emerald-400/30 px-3.5 py-1 rounded-full text-xs font-teacher font-bold uppercase tracking-wider">
             <Mic className="w-3.5 h-3.5 text-emerald-300" />
-            Reto de Pronunciación en Voz Alta
+            Say It Out Loud Challenge
           </div>
 
           {/* Target Word Hero Display */}
@@ -137,9 +137,6 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
               <span className="text-sm font-mono font-bold bg-emerald-950/60 text-emerald-200 px-3 py-1 rounded-xl border border-emerald-400/30">
                 {activeWord.phonetics}
               </span>
-              <span className="text-sm font-teacher font-bold text-amber-200 bg-emerald-900/60 px-3 py-1 rounded-xl">
-                Español: {activeWord.meaningEs}
-              </span>
             </div>
             <p className="text-xs text-emerald-100 italic mt-2">
               "{activeWord.exampleSentence}"
@@ -151,19 +148,19 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
             <button
               onClick={handleListenTeacher}
               className="px-4 py-2 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/25 text-white font-teacher font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
-              title="Escuchar pronunciación estándar con voz del profesor IA"
+              title="Hear the teacher say the word"
             >
               <Volume2 className="w-4 h-4 text-amber-300" />
-              <span>Escuchar al Profesor</span>
+              <span>Hear the Teacher</span>
             </button>
 
             <button
               onClick={handleListenSlow}
               className="px-4 py-2 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/25 text-white font-teacher font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
-              title="Escuchar desglose fonético lento"
+              title="Hear it slowly, sound by sound"
             >
               <RotateCcw className="w-3.5 h-3.5 text-sky-300" />
-              <span>Escuchar Lento (/k/ ... /æt/)</span>
+              <span>Listen Slowly (/k/ ... /æt/)</span>
             </button>
           </div>
 
@@ -178,7 +175,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
                     ? 'bg-rose-500 scale-110 ring-8 ring-rose-300 animate-pulse'
                     : 'bg-gradient-to-tr from-amber-400 to-orange-500 hover:scale-105 active:scale-95 hover:shadow-amber-500/50'
                 }`}
-                title="Presiona y pronuncia la palabra"
+                title="Press and say the word"
               >
                 {isListening ? (
                   <MicOff className="w-10 h-10 animate-spin" />
@@ -189,8 +186,8 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
 
               <span className="font-teacher font-extrabold text-sm sm:text-base text-white tracking-wide">
                 {isListening
-                  ? '🎙️ ¡El profesor te está escuchando! ¡Habla ahora!'
-                  : '👆 ¡Toca el micrófono y pronuncia la palabra!'}
+                  ? '🎙️ The teacher is listening! Speak now!'
+                  : '👆 Tap the microphone and say the word!'}
               </span>
             </div>
           </div>
@@ -219,11 +216,11 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
                     />
                   ))}
                   <span className="font-teacher font-extrabold text-sm ml-2">
-                    +{result.stars} Estrellas Ganadas
+                    +{result.stars} Stars Earned
                   </span>
                 </div>
                 <span className="text-xs font-bold font-mono bg-white/70 px-2 py-0.5 rounded-md">
-                  Puntuación: {result.score}%
+                  Score: {result.score}%
                 </span>
               </div>
 
@@ -231,7 +228,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
                 {result.feedbackEs}
               </p>
               <p className="text-xs text-slate-600 mt-1 italic">
-                "{result.feedbackEn}" (Escuchado: "{result.transcript}")
+                "{result.feedbackEn}" (I heard: "{result.transcript}")
               </p>
 
               <div className="mt-3 pt-3 border-t border-black/10 flex items-center justify-end">
@@ -239,7 +236,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
                   onClick={handleNextWord}
                   className="px-4 py-2 rounded-xl bg-slate-900 text-white font-teacher font-bold text-xs hover:bg-slate-800 transition-transform active:scale-95 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span>Siguiente palabra</span>
+                  <span>Next word</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -257,8 +254,8 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
             <div className="p-3 bg-amber-950/80 border border-amber-400/30 text-amber-200 rounded-2xl text-xs flex items-center justify-center gap-2">
               <HelpCircle className="w-4 h-4 text-amber-400" />
               <span>
-                Tip: Para usar el micrófono recomendamos Chrome o Edge. También puedes practicar
-                escuchando la pronunciación lenta con voz del profesor IA.
+                Tip: The microphone works best in Chrome or Edge. You can also practice
+                by listening to the teacher say the word slowly.
               </span>
             </div>
           )}
@@ -268,7 +265,7 @@ export const VoiceChallenge: React.FC<VoiceChallengeProps> = ({
       {/* Word Quick Selector Carousel */}
       <div className="bg-white rounded-3xl p-5 border-2 border-slate-200 shadow-sm">
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-teacher mb-3">
-          Otras palabras para desafiarte hoy:
+          More words to try today:
         </h3>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {sampleWords.map((w) => {

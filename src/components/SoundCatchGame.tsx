@@ -133,29 +133,29 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
           <div>
             <span className="bg-sky-950/60 text-sky-200 border border-sky-400/40 px-3 py-1 rounded-full text-xs font-teacher font-bold uppercase tracking-wider">
-              🎮 Minijuego Auditivo
+              🎮 Listening Mini-Game
             </span>
             <h2 className="text-2xl sm:text-3xl font-teacher font-extrabold mt-1">
-              Atrapa el Sonido Fonético
+              Catch the Phonics Sound
             </h2>
           </div>
 
           {gameState === 'playing' && (
             <div className="flex items-center gap-3">
               <div className="bg-sky-950/60 px-3 py-1.5 rounded-2xl border border-sky-400/30 text-center">
-                <span className="text-[10px] text-sky-300 uppercase font-bold block">Puntos</span>
+                <span className="text-[10px] text-sky-300 uppercase font-bold block">Points</span>
                 <span className="font-teacher font-extrabold text-lg text-amber-300">{score}</span>
               </div>
 
               <div className="bg-sky-950/60 px-3 py-1.5 rounded-2xl border border-sky-400/30 text-center">
                 <span className="text-[10px] text-orange-300 uppercase font-bold block flex items-center gap-0.5 justify-center">
-                  <Flame className="w-3 h-3 text-orange-400 fill-orange-400" /> Racha
+                  <Flame className="w-3 h-3 text-orange-400 fill-orange-400" /> Streak
                 </span>
                 <span className="font-teacher font-extrabold text-lg text-white">{streak}x</span>
               </div>
 
               <div className="bg-sky-950/60 px-3 py-1.5 rounded-2xl border border-sky-400/30 text-center">
-                <span className="text-[10px] text-sky-300 uppercase font-bold block">Ronda</span>
+                <span className="text-[10px] text-sky-300 uppercase font-bold block">Round</span>
                 <span className="font-teacher font-extrabold text-lg text-white">
                   {round}/{totalRounds}
                 </span>
@@ -169,18 +169,18 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
           <div className="text-center py-10 max-w-lg mx-auto space-y-4">
             <div className="text-6xl animate-bounce">🎧🫧</div>
             <h3 className="font-teacher font-extrabold text-2xl text-white">
-              ¡Entrena tu oído para reconocer cada sonido!
+              Train your ears to hear every sound!
             </h3>
             <p className="text-xs sm:text-sm text-sky-100 font-medium leading-relaxed">
-              El profesor pronunciará una palabra en inglés con <strong>voz del profesor IA</strong>. Tu misión es
-              atrapar la tarjeta correcta entre las opciones antes de que termine el tiempo.
+              The teacher will say an English word with the <strong>AI teacher voice</strong>. Your mission is
+              to catch the right card before time runs out.
             </p>
             <button
               onClick={handleStartGame}
               className="px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-900 font-teacher font-extrabold text-base shadow-xl transition-all inline-flex items-center gap-2 cursor-pointer"
             >
               <Play className="w-5 h-5 fill-slate-900" />
-              <span>¡Comenzar Desafío!</span>
+              <span>Start the Challenge!</span>
             </button>
           </div>
         )}
@@ -191,14 +191,14 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
             {/* Audio Button Prompt */}
             <div className="p-4 bg-sky-950/50 rounded-2xl border border-sky-400/30 inline-flex flex-col items-center">
               <span className="text-xs text-sky-200 font-teacher font-semibold mb-2">
-                Escucha la pronunciación del profesor:
+                Listen to the teacher:
               </span>
               <button
                 onClick={handleRepeatSound}
                 className="px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-900 font-teacher font-extrabold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Volume2 className="w-5 h-5 animate-pulse" />
-                <span>Repetir Sonido ({teacherVoice})</span>
+                <span>Play Again ({teacherVoice})</span>
               </button>
             </div>
 
@@ -253,12 +253,12 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
                 {isAnswerCorrect ? (
                   <>
                     <CheckCircle2 className="w-5 h-5 text-slate-950" />
-                    <span>¡Correcto! {targetWord.word} ({targetWord.meaningEs})</span>
+                    <span>Correct! {targetWord.word}</span>
                   </>
                 ) : (
                   <>
                     <XCircle className="w-5 h-5" />
-                    <span>¡Casi! La palabra era {targetWord.word}</span>
+                    <span>So close! The word was {targetWord.word}</span>
                   </>
                 )}
               </div>
@@ -271,11 +271,11 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
           <div className="text-center py-10 max-w-md mx-auto space-y-4">
             <div className="text-6xl animate-bounce">🏆⭐</div>
             <h3 className="font-teacher font-extrabold text-3xl text-amber-300">
-              ¡Ronda Completada!
+              Round Complete!
             </h3>
             <p className="text-sm text-sky-100 font-medium">
-              Obtuviste <strong className="text-white text-lg">{score} puntos</strong> y ganaste{' '}
-              <strong className="text-amber-300 text-lg">+5 Estrellas extra</strong> para tu frasco escolar.
+              You got <strong className="text-white text-lg">{score} points</strong> and won{' '}
+              <strong className="text-amber-300 text-lg">+5 bonus stars</strong> for your star jar.
             </p>
             <div className="pt-2 flex items-center justify-center gap-3">
               <button
@@ -283,7 +283,7 @@ export const SoundCatchGame: React.FC<SoundCatchGameProps> = ({
                 className="px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-900 font-teacher font-extrabold text-sm shadow-xl transition-all inline-flex items-center gap-2 cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Jugar Otra Ronda</span>
+                <span>Play Another Round</span>
               </button>
             </div>
           </div>

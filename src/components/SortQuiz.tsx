@@ -28,14 +28,14 @@ interface Question {
 }
 
 const STEP_PROMPTS: Record<AssessmentStep, string> = {
-  initial: '¿Con qué sonido empieza?',
-  vowel: '¿Qué vocal corta tiene en el medio?',
-  final: '¿Con qué sonido termina?',
+  initial: 'What sound does it start with?',
+  vowel: 'What short vowel is in the middle?',
+  final: 'What sound does it end with?',
 };
 
 function buildQuestions(sort: WordSort): Question[] {
   if (sort.mode === 'quiz') {
-    return buildConsonantQuiz().map((q) => ({ ...q, prompt: '¿Con qué sonido empieza?' }));
+    return buildConsonantQuiz().map((q) => ({ ...q, prompt: 'What sound does it start with?' }));
   }
   return buildFinalAssessment().flatMap((item) =>
     (['initial', 'vowel', 'final'] as AssessmentStep[]).map((step) => ({
@@ -104,7 +104,7 @@ export const SortQuiz: React.FC<SortQuizProps> = ({ sort, teacherVoice, onBack, 
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <button onClick={onBack} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700">
-          <ArrowLeft className="w-4 h-4" /> Curso
+          <ArrowLeft className="w-4 h-4" /> Course
         </button>
         <div className="text-right">
           <div className="font-teacher font-extrabold text-lg text-slate-800 leading-tight">
@@ -117,7 +117,7 @@ export const SortQuiz: React.FC<SortQuizProps> = ({ sort, teacherVoice, onBack, 
       {!finished && word ? (
         <div className="bg-slate-900 rounded-3xl p-5 text-center text-white space-y-4">
           <div className="text-xs text-slate-400">
-            Pregunta {index + 1} de {questions.length}
+            Question {index + 1} of {questions.length}
             <div className="mt-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div className="h-full bg-amber-400" style={{ width: `${(index / questions.length) * 100}%` }} />
             </div>
@@ -129,7 +129,7 @@ export const SortQuiz: React.FC<SortQuizProps> = ({ sort, teacherVoice, onBack, 
             <span className="text-6xl">{word.emoji}</span>
             {current.masked && <span className="font-teacher font-extrabold text-4xl tracking-widest">{current.masked}</span>}
             <span className="flex items-center gap-1 text-amber-300 text-sm font-bold">
-              <Volume2 className="w-4 h-4" /> Escuchar
+              <Volume2 className="w-4 h-4" /> Listen
             </span>
           </button>
           <div className="font-teacher font-bold text-lg">{current.prompt}</div>
@@ -156,23 +156,23 @@ export const SortQuiz: React.FC<SortQuizProps> = ({ sort, teacherVoice, onBack, 
       ) : (
         <div className={`${!isAssessment || passed ? 'bg-emerald-600' : 'bg-amber-600'} rounded-3xl p-5 text-center text-white space-y-3`}>
           <div className="font-teacher font-extrabold text-2xl">
-            {isAssessment ? (passed ? '🎓 ¡Etapa superada!' : 'Casi lo logras') : '¡Repaso terminado!'}
+            {isAssessment ? (passed ? '🎓 Level passed!' : 'Almost there!') : 'Review finished!'}
           </div>
           <div className="text-4xl font-extrabold">{Math.round(score * 100)}%</div>
           <div className="text-sm text-white/90">
-            {correct} de {questions.length} respuestas correctas
+            {correct} of {questions.length} answers correct
             {isAssessment &&
               (passed
-                ? '. Dominas sonido inicial, vocal corta y sonido final: listo para vocales largas (CVCe).'
-                : `. Necesitas ${Math.round(ASSESSMENT_PASS_RATIO * 100)}% para pasar. Repasa la Unidad 6 y vuelve a intentarlo.`)}
+                ? '. You know first sounds, short vowels and last sounds: ready for long vowels (CVCe)!'
+                : `. You need ${Math.round(ASSESSMENT_PASS_RATIO * 100)}% to pass. Review Unit 6 and try again.`)}
           </div>
           <div className="flex justify-center gap-2">
             <button onClick={() => setRound((r) => r + 1)} className="flex items-center gap-1 px-4 py-2 rounded-full bg-white/20 font-bold text-sm">
-              <RotateCcw className="w-4 h-4" /> Repetir
+              <RotateCcw className="w-4 h-4" /> Try again
             </button>
             {onNext && (
               <button onClick={onNext} className="px-4 py-2 rounded-full bg-white text-emerald-700 font-bold text-sm">
-                Siguiente →
+                Next →
               </button>
             )}
           </div>

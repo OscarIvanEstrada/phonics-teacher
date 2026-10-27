@@ -3,6 +3,7 @@ import { ExternalLink, Github, X } from 'lucide-react';
 import { AudioPlaybackEvent, isNativeApp } from '../services/audioService';
 import { AUDIO_BRANCH, AUDIO_REPO } from '../services/audioPaths';
 import { subscribePublishedAudio } from '../services/publishedAudio';
+import { IS_STATIC } from '../config';
 
 interface AudioCacheModalProps {
   isOpen: boolean;
@@ -11,11 +12,11 @@ interface AudioCacheModalProps {
 }
 
 const SOURCE_LABEL: Record<AudioPlaybackEvent['source'], string> = {
-  github: '📦 Leído de GitHub (ya estaba publicado)',
-  kokoro: '✨ Generado con Kokoro (se publica en GitHub)',
-  chatterbox: '✨ Generado con Chatterbox (se publica en GitHub)',
-  'ios-native': '📱 Voz del iPhone (no se publica)',
-  'browser-fallback': '🗣️ Voz del navegador (respaldo)',
+  github: '📦 Loaded from GitHub (already published)',
+  kokoro: '✨ Made with Kokoro (published to GitHub)',
+  chatterbox: '✨ Made with Chatterbox (published to GitHub)',
+  'ios-native': '📱 iPhone voice (not published)',
+  'browser-fallback': '🗣️ Browser voice (backup)',
 };
 
 /** Published audio on GitHub, grouped by engine and voice. */
@@ -26,7 +27,7 @@ export const AudioCacheModal: React.FC<AudioCacheModalProps> = ({ isOpen, onClos
   useEffect(() => {
     if (!isOpen) return;
     const unsubscribe = subscribePublishedAudio((p) => setPaths([...p]));
-    if (!isNativeApp) {
+    if (!isNativeApp && !IS_STATIC) {
       fetch('/api/health')
         .then((r) => r.json())
         .then((h) => setPublishing(h.audioPublishing ?? null))
@@ -53,13 +54,13 @@ export const AudioCacheModal: React.FC<AudioCacheModalProps> = ({ isOpen, onClos
           <div className="flex items-center gap-3">
             <Github className="w-6 h-6" />
             <div>
-              <h3 className="font-teacher font-extrabold text-xl leading-tight">Audios publicados</h3>
+              <h3 className="font-teacher font-extrabold text-xl leading-tight">Published audio</h3>
               <p className="text-xs text-slate-300">
-                {AUDIO_REPO} · <code>audio/</code> en <code>{AUDIO_BRANCH}</code>
+                {AUDIO_REPO} · <code>audio/</code> on <code>{AUDIO_BRANCH}</code>
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20" aria-label="Cerrar">
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -68,10 +69,10 @@ export const AudioCacheModal: React.FC<AudioCacheModalProps> = ({ isOpen, onClos
           <div className="flex items-end justify-between">
             <div>
               <div className="text-4xl font-extrabold text-slate-800">{paths.length}</div>
-              <div className="text-slate-500">audios en GitHub</div>
+              <div className="text-slate-500">audio files on GitHub</div>
             </div>
             <a href={branchUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-indigo-600 font-bold">
-              Ver en GitHub <ExternalLink className="w-4 h-4" />
+              See on GitHub <ExternalLink className="w-4 h-4" />
             </a>
           </div>
 
@@ -88,24 +89,24 @@ export const AudioCacheModal: React.FC<AudioCacheModalProps> = ({ isOpen, onClos
 
           {lastEvent && (
             <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
-              <div className="font-bold text-slate-800">Último audio: "{lastEvent.word}"</div>
+              <div className="font-bold text-slate-800">Last audio: "{lastEvent.word}"</div>
               <div className="text-slate-600">{SOURCE_LABEL[lastEvent.source]}</div>
             </div>
           )}
 
           <div className="space-y-2 text-slate-600">
             <p>
-              <strong>Lectura:</strong> la web y el iPhone buscan primero el audio en GitHub. Si ya existe, se descarga de
-              ahí y no se vuelve a generar.
+              <strong>Reading:</strong> the website and the iPhone look for the audio on GitHub first. If it is already there,
+              it is downloaded and not made again.
             </p>
             <p>
-              <strong>Escritura:</strong> cuando falta, el servidor lo genera con el motor elegido y lo sube a GitHub para
-              todos. El iPhone no puede publicar: si falta, usa su propia voz.
+              <strong>Writing:</strong> when it is missing, the server makes it with the chosen engine and uploads it to GitHub
+              for everyone. The iPhone cannot publish: if audio is missing, it uses its own voice.
             </p>
-            {!isNativeApp && (
+            {!isNativeApp && !IS_STATIC && (
               <p className={publishing?.startsWith('github') ? 'text-emerald-700' : 'text-amber-700'}>
-                <strong>Publicación del servidor:</strong>{' '}
-                {publishing?.startsWith('github') ? 'activa' : 'desactivada — añade GITHUB_TOKEN en .env'}
+                <strong>Server publishing:</strong>{' '}
+                {publishing?.startsWith('github') ? 'on' : 'off — add GITHUB_TOKEN to .env'}
               </p>
             )}
           </div>

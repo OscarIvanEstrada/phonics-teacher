@@ -15,6 +15,7 @@ import { WordSort } from './data/course';
 import { getCourseProgress, nextSort, saveSortResult } from './services/course';
 import { loadPublishedAudio, subscribePublishedAudio } from './services/publishedAudio';
 import { wordFromPath } from './services/audioPaths';
+import { IS_STATIC } from './config';
 import { PhonicsWord, UserStats } from './types/phonics';
 import { BLACKBOARD_GROUPS } from './data/blackboardGroups';
 import {
@@ -165,29 +166,22 @@ export default function App() {
           en: selectedWordForVoice
             ? `Pronounce "${selectedWordForVoice.word}". Focus on the ${selectedWordForVoice.rime} sound!`
             : 'Listen to my voice, then tap the microphone and speak aloud!',
-          es: selectedWordForVoice
-            ? `Pronuncia "${selectedWordForVoice.word}". ¡Concéntrate en el sonido ${selectedWordForVoice.rime}!`
-            : '¡Escucha mi voz, presiona el micrófono y pronuncia en voz alta!',
         };
       case 'lab':
         return {
           en: 'Welcome to the AI Word Lab! We save every newly generated word in IndexedDB to never repeat words!',
-          es: '¡Bienvenido al Laboratorio IA! Guardamos cada palabra en IndexedDB para no repetir las mismas.',
         };
       case 'juego':
         return {
           en: 'Listen to the sound and catch the right word card as fast as you can!',
-          es: '¡Escucha el sonido y atrapa la tarjeta correcta lo más rápido que puedas!',
         };
       case 'premios':
         return {
           en: `You have collected ${userStats.totalStars} stars! Check your unlocked stickers and report card!`,
-          es: `¡Has acumulado ${userStats.totalStars} estrellas! ¡Revisa tus trofeos y boletín de notas!`,
         };
       default:
         return {
           en: `Let us explore the ${BLACKBOARD_GROUPS[selectedGroupIndex]?.title.split('.')[1]?.trim() || 'short vowels'}! Blend onset and rime together.`,
-          es: '¡Exploremos las familias de palabras! Toca para escuchar y fusionar cada sonido.',
         };
     }
   };
@@ -223,15 +217,15 @@ export default function App() {
           <div className="text-xs">
             <div className="font-teacher font-bold text-amber-300">
               {lastPlaybackEvent.fromCache
-                ? 'Audio publicado en GitHub'
+                ? 'Audio published on GitHub'
                 : lastPlaybackEvent.source === 'browser-fallback'
-                ? 'Voz del Navegador (Respaldo activo)'
+                ? 'Browser voice (backup on)'
                 : lastPlaybackEvent.source === 'ios-native'
-                ? 'Voz del iPhone (en el dispositivo)'
-                : `Generado con ${ENGINE_LABELS[lastPlaybackEvent.engine]} TTS`}
+                ? 'iPhone voice (on device)'
+                : `Made with ${ENGINE_LABELS[lastPlaybackEvent.engine]} TTS`}
             </div>
             <div className="text-slate-300 font-medium">
-              Palabra: "{lastPlaybackEvent.word}" •{' '}
+              Word: "{lastPlaybackEvent.word}" •{' '}
               {lastPlaybackEvent.source === 'github'
                 ? `GitHub · ${ENGINE_LABELS[lastPlaybackEvent.engine]}`
                 : lastPlaybackEvent.source === 'kokoro'
@@ -239,8 +233,8 @@ export default function App() {
                 : lastPlaybackEvent.source === 'chatterbox'
                 ? 'Chatterbox Turbo'
                 : lastPlaybackEvent.source === 'ios-native'
-                ? 'Voz nativa de iOS'
-                : 'Síntesis local de respaldo'}
+                ? 'Native iOS voice'
+                : 'Local backup voice'}
             </div>
           </div>
         </div>
@@ -250,7 +244,7 @@ export default function App() {
       {!isNativeApp && (
       <div className="fixed bottom-5 left-5 z-40 bg-white/95 backdrop-blur-md px-3 py-2.5 rounded-2xl shadow-xl border border-slate-200 flex flex-col gap-2 text-xs max-w-[calc(100vw-2.5rem)]">
         <div className="flex items-center gap-1">
-          <span className="font-bold text-slate-600 mr-1">Voz IA:</span>
+          <span className="font-bold text-slate-600 mr-1">AI voice:</span>
           {(Object.keys(ENGINE_LABELS) as TtsEngine[]).map((engine) => (
             <button
               key={engine}
@@ -263,14 +257,14 @@ export default function App() {
             </button>
           ))}
         </div>
-        {lastPlaybackEvent && (
+        {lastPlaybackEvent && !IS_STATIC && (
           <button
             onClick={handleRegenerateLast}
             disabled={isRegenerating}
-            title="Si el audio salió mal, vuelve a generarlo y reemplaza el guardado"
+            title="If the audio sounds wrong, make it again and replace the saved one"
             className="px-2.5 py-1 rounded-full font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 truncate"
           >
-            {isRegenerating ? '⏳ Regenerando…' : `🔄 Regenerar "${lastPlaybackEvent.word.slice(0, 24)}"`}
+            {isRegenerating ? '⏳ Remaking…' : `🔄 Remake "${lastPlaybackEvent.word.slice(0, 24)}"`}
           </button>
         )}
       </div>
@@ -282,7 +276,7 @@ export default function App() {
           onClick={() => setIsVoiceSettingsOpen(true)}
           className="fixed left-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-full shadow-xl border border-slate-200 text-sm font-bold text-indigo-700"
         >
-          🎙️ Voces
+          🎙️ Voices
         </button>
       )}
       <VoiceSettingsModal
@@ -298,7 +292,6 @@ export default function App() {
           teacherId={userStats.selectedTeacher}
           mood={teacherMood}
           speechText={dialogue.en}
-          speechTextEs={dialogue.es}
           onSpeak={() => {
             audioService.speakPhonicsWord(dialogue.en, {
               voiceName: currentTeacher.voice,
@@ -324,7 +317,7 @@ export default function App() {
             <CourseMap progress={courseProgress} onOpenSort={setOpenSort} />
           ))}
 
-        {/* Tab 1: Pizarra Fonética (Curriculum Core) */}
+        {/* Tab 1: Phonics Blackboard (Curriculum Core) */}
         {activeTab === 'pizarra' && (
           <PhonicsBlackboard
             selectedGroupIndex={selectedGroupIndex}
@@ -338,7 +331,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 2: Reto de Pronunciación (Voice Match & Speech Recognition) */}
+        {/* Tab 2: Pronunciation Challenge (Voice Match & Speech Recognition) */}
         {activeTab === 'micro' && (
           <VoiceChallenge
             currentWord={selectedWordForVoice}
@@ -348,7 +341,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 3: Laboratorio IA + IndexedDB (Prevents repetition) */}
+        {/* Tab 3: AI Lab + IndexedDB (Prevents repetition) */}
         {activeTab === 'lab' && (
           <WordLabAI
             onStarsEarned={handleStarsEarned}
@@ -357,7 +350,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 4: Atrapa el Sonido (Game) */}
+        {/* Tab 4: Sound Catch (Game) */}
         {activeTab === 'juego' && (
           <SoundCatchGame
             onStarsEarned={handleStarsEarned}
@@ -365,7 +358,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 5: Álbum de Pegatinas y Boletín */}
+        {/* Tab 5: Sticker Album & Report Card */}
         {activeTab === 'premios' && (
           <RewardsAndStickers
             userStats={userStats}
@@ -387,13 +380,13 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="text-xl">🏫</span>
             <span className="font-teacher font-bold text-slate-200">
-              Phonics Academy (7 - 11 Años)
+              Phonics Academy (Ages 7 - 11)
             </span>
             <span className="text-slate-500">•</span>
-            <span>Kokoro & Chatterbox TTS · Audios en GitHub</span>
+            <span>Kokoro & Chatterbox TTS · Audio on GitHub</span>
           </div>
           <div className="text-center sm:text-right text-slate-400">
-            Familias Vocales Cortas (-an, -in, -en, -un, Short A, E, I, O, U) y Grados 1º a 3º
+            Short Vowel Families (-an, -in, -en, -un, Short A, E, I, O, U) · Grades 1 to 3
           </div>
         </div>
       </footer>

@@ -9,3 +9,4 @@ coverage/
 
 # Generated audio
 .audio_cache/
+dist-pages/

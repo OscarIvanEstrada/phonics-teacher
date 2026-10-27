@@ -36,7 +36,7 @@ export class PhonicsSpeechRecognizer {
     onEnd?: () => void
   ) {
     if (!this.recognition) {
-      onError('El reconocimiento de voz no está soportado en este navegador. Puedes usar Chrome o Edge.');
+      onError('Speech recognition does not work in this browser. Try Chrome or Edge.');
       return;
     }
 
@@ -67,11 +67,11 @@ export class PhonicsSpeechRecognizer {
 
     this.recognition.onerror = (event: any) => {
       this.isListening = false;
-      let msg = 'No pudimos escuchar con claridad. ¡Intenta de nuevo!';
+      let msg = 'We could not hear you clearly. Try again!';
       if (event.error === 'not-allowed') {
-        msg = 'Por favor permite el acceso al micrófono para que el profesor te escuche.';
+        msg = 'Please allow microphone access so the teacher can hear you.';
       } else if (event.error === 'no-speech') {
-        msg = 'No se detectó sonido. Habla cerca del micrófono.';
+        msg = 'No sound heard. Speak close to the microphone.';
       }
       onError(msg);
     };
@@ -85,7 +85,7 @@ export class PhonicsSpeechRecognizer {
       this.recognition.start();
     } catch (err: any) {
       this.isListening = false;
-      onError('Error al iniciar el micrófono: ' + err.message);
+      onError('Could not start the microphone: ' + err.message);
     }
   }
 
@@ -117,7 +117,7 @@ export class PhonicsSpeechRecognizer {
         isMatch: true,
         score: 100,
         stars: 3,
-        feedbackEs: '¡Pronunciación perfecta! ¡Sonó exactamente como un nativo!',
+        feedbackEs: 'Perfect pronunciation! You sounded just like a native speaker!',
         feedbackEn: 'Awesome pronunciation! You nailed it!',
       };
     }
@@ -130,7 +130,7 @@ export class PhonicsSpeechRecognizer {
         isMatch: true,
         score: 90,
         stars: 3,
-        feedbackEs: '¡Excelente! Escuché la palabra clara en tu frase.',
+        feedbackEs: 'Excellent! I heard the word clearly in what you said.',
         feedbackEn: 'Great job! Loud and clear.',
       };
     }
@@ -143,18 +143,18 @@ export class PhonicsSpeechRecognizer {
         isMatch: true,
         score: 75,
         stars: 2,
-        feedbackEs: `¡Casi perfecto! Dijiste "${cleanSpoken}". ¡Presta atención al final!`,
+        feedbackEs: `Almost perfect! You said "${cleanSpoken}". Listen closely to the ending!`,
         feedbackEn: 'Super close! Listen one more time and repeat.',
       };
     }
 
     // 4. Try again
     return {
-      transcript: cleanSpoken || '(sonido bajo)',
+      transcript: cleanSpoken || '(very quiet)',
       isMatch: false,
       score: 40,
       stars: 1,
-      feedbackEs: `Escuché "${cleanSpoken || 'algo bajito'}". Escucha al profesor y repite con fuerza.`,
+      feedbackEs: `I heard "${cleanSpoken || 'something quiet'}". Listen to the teacher and say it nice and loud.`,
       feedbackEn: "Good try! Let's practice it together.",
     };
   }

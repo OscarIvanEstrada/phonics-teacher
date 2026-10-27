@@ -188,7 +188,7 @@ app.post('/api/tts', async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error: any) {
     lastTtsStatus = 'unavailable';
-    lastTtsError = `Fallo del motor TTS: ${error.message}`;
+    lastTtsError = `TTS engine failed: ${error.message}`;
     console.error('TTS error:', error);
     res.status(500).json({
       error: error.message || 'Failed to generate speech audio',

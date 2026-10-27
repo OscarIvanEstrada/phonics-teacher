@@ -41,7 +41,7 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
   const tabs = [
     {
       id: 'curso' as ActiveTab,
-      label: 'Curso',
+      label: 'Course',
       badge: '42 Sorts',
       icon: GraduationCap,
       color: 'hover:bg-indigo-100 text-indigo-900',
@@ -49,23 +49,23 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
     },
     {
       id: 'pizarra' as ActiveTab,
-      label: 'Pizarra de Sonidos',
-      badge: 'Familias',
+      label: 'Sound Blackboard',
+      badge: 'Families',
       icon: BookOpen,
       color: 'hover:bg-amber-100 text-amber-900',
       activeClass: 'bg-amber-500 text-white shadow-md',
     },
     {
       id: 'micro' as ActiveTab,
-      label: 'Reto de Pronunciación',
-      badge: 'Micrófono',
+      label: 'Speaking Challenge',
+      badge: 'Microphone',
       icon: Mic,
       color: 'hover:bg-emerald-100 text-emerald-900',
       activeClass: 'bg-emerald-600 text-white shadow-md',
     },
     {
       id: 'lab' as ActiveTab,
-      label: 'Laboratorio IA + Memory',
+      label: 'AI Lab + Memory',
       badge: 'IndexedDB',
       icon: Sparkles,
       color: 'hover:bg-purple-100 text-purple-900',
@@ -73,16 +73,16 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
     },
     {
       id: 'juego' as ActiveTab,
-      label: 'Atrapa el Sonido',
-      badge: 'Juego',
+      label: 'Catch the Sound',
+      badge: 'Game',
       icon: Gamepad2,
       color: 'hover:bg-sky-100 text-sky-900',
       activeClass: 'bg-sky-600 text-white shadow-md',
     },
     {
       id: 'premios' as ActiveTab,
-      label: 'Álbum y Premios',
-      badge: `${userStats.unlockedStickers.length} Trofeos`,
+      label: 'Album & Prizes',
+      badge: `${userStats.unlockedStickers.length} Trophies`,
       icon: Award,
       color: 'hover:bg-rose-100 text-rose-900',
       activeClass: 'bg-rose-600 text-white shadow-md',
@@ -104,21 +104,21 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
                 Phonics Teacher
               </h1>
               <span className="hidden sm:inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Grados 1º - 4º (7-11 años)
+                Grades 1 - 4 (ages 7-11)
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium hidden sm:block">
-              Aprende sonidos en inglés con tu profesor favorito y memoria IndexedDB
+              Learn English sounds with your favorite teacher
             </p>
           </div>
         </div>
 
         {/* Gamification Counters & Controls */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          {/* Star Bank (Frasco de Estrellas) */}
+          {/* Star Bank (Star Jar) */}
           <div
             className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-2xl shadow-inner cursor-pointer hover:bg-amber-100 transition-colors"
-            title="Estrellas acumuladas en tu frasco escolar"
+            title="Stars collected in your star jar"
             onClick={() => onTabChange('premios')}
           >
             <Star className="w-4 h-4 text-amber-500 fill-amber-400 animate-twinkle" />
@@ -130,7 +130,7 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
           {/* Daily Streak */}
           <div
             className="flex items-center gap-1.5 bg-orange-50 border border-orange-300 px-2.5 py-1.5 rounded-2xl shadow-inner"
-            title="Racha de práctica diaria"
+            title="Daily practice streak"
           >
             <Flame className="w-4 h-4 text-orange-500 fill-orange-400" />
             <span className="font-teacher font-bold text-orange-900 text-xs sm:text-sm">
@@ -142,10 +142,10 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
           <button
             onClick={onOpenAudioCacheModal}
             className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1.5 rounded-2xl text-xs font-bold font-teacher text-emerald-800 transition-colors cursor-pointer shadow-xs active:scale-95"
-            title="Ver los audios publicados en GitHub"
+            title="See the audio published on GitHub"
           >
             <Database className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="hidden sm:inline">Caché TTS</span>
+            <span className="hidden sm:inline">TTS Cache</span>
             <span className="bg-emerald-200 text-emerald-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
               {cachedAudioCount}
             </span>
@@ -155,14 +155,14 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
           <div className="relative group">
             <button
               className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2.5 py-1.5 rounded-2xl text-xs font-bold font-teacher text-slate-700 transition-colors cursor-pointer"
-              title="Cambiar de profesor"
+              title="Change teacher"
             >
               <Users className="w-3.5 h-3.5 text-slate-500" />
               <span>{currentTeacher.emoji} {currentTeacher.name.split(' ')[0]}</span>
             </button>
             <div className="absolute right-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 hidden group-hover:block hover:block z-50">
               <p className="text-[11px] font-bold text-slate-400 px-2 py-1 uppercase tracking-wider">
-                Elige a tu Profesor:
+                Choose your teacher:
               </p>
               {(Object.keys(TEACHER_PROFILES) as Array<keyof typeof TEACHER_PROFILES>).map((tKey) => {
                 const prof = TEACHER_PROFILES[tKey];
@@ -196,7 +196,7 @@ export const ClassroomHeader: React.FC<ClassroomHeaderProps> = ({
                 ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
                 : 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
             }`}
-            title={userStats.soundEnabled ? 'Silenciar sonidos' : 'Activar sonidos'}
+            title={userStats.soundEnabled ? 'Mute sounds' : 'Turn sounds on'}
           >
             {userStats.soundEnabled ? (
               <Volume2 className="w-4 h-4" />

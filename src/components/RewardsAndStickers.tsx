@@ -56,13 +56,13 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
             </div>
             <div>
               <span className="bg-amber-950/60 border border-amber-300/40 text-amber-200 text-xs font-teacher font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Frasco de Estrellas Escolar
+                School Star Jar
               </span>
               <h2 className="text-3xl sm:text-4xl font-teacher font-extrabold text-white mt-1">
-                {userStats.totalStars} Estrellas Doradas
+                {userStats.totalStars} Gold Stars
               </h2>
               <p className="text-xs sm:text-sm text-amber-100 font-medium mt-1">
-                Ganas estrellas escuchando fonética, pronunciando con el micrófono y generando palabras.
+                Earn stars by listening to sounds, speaking into the microphone and making new words.
               </p>
             </div>
           </div>
@@ -71,7 +71,7 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
           <div className="grid grid-cols-2 gap-3 shrink-0 bg-amber-950/50 p-3 rounded-2xl border border-amber-300/40">
             <div className="text-center p-2">
               <span className="text-[10px] text-amber-200 uppercase font-bold block">
-                Palabras Dominadas
+                Words Mastered
               </span>
               <span className="font-teacher font-extrabold text-2xl text-white">
                 {totalMasteredWords}
@@ -79,10 +79,10 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
             </div>
             <div className="text-center p-2">
               <span className="text-[10px] text-orange-200 uppercase font-bold block flex items-center gap-1 justify-center">
-                <Flame className="w-3 h-3 text-orange-400 fill-orange-400" /> Racha
+                <Flame className="w-3 h-3 text-orange-400 fill-orange-400" /> Streak
               </span>
               <span className="font-teacher font-extrabold text-2xl text-white">
-                {userStats.currentStreak} días
+                {userStats.currentStreak} days
               </span>
             </div>
           </div>
@@ -94,15 +94,15 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-teacher font-extrabold text-2xl text-slate-800 flex items-center gap-2">
-              <span>Álbum de Pegatinas y Trofeos</span>
+              <span>Sticker & Trophy Album</span>
               <Sparkles className="w-5 h-5 text-amber-500" />
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Desbloquea insignias mágicas acumulando estrellas en tus actividades diarias.
+              Unlock magic badges by collecting stars in your daily activities.
             </p>
           </div>
           <span className="text-xs font-teacher font-bold text-amber-900 bg-amber-100 px-3 py-1 rounded-xl">
-            {STICKERS_CATALOG.filter((s) => userStats.totalStars >= s.requiredStars).length} de {STICKERS_CATALOG.length} Desbloqueados
+            {STICKERS_CATALOG.filter((s) => userStats.totalStars >= s.requiredStars).length} of {STICKERS_CATALOG.length} Unlocked
           </span>
         </div>
 
@@ -130,7 +130,7 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
                 </div>
 
                 <h4 className="font-teacher font-extrabold text-sm text-slate-800">
-                  {stk.nameEs}
+                  {stk.name}
                 </h4>
                 <p className="text-[11px] text-slate-500 font-medium mt-1 leading-tight">
                   {stk.descriptionEs}
@@ -139,12 +139,12 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
                 <div className="mt-3 pt-2 border-t border-slate-200/80">
                   {isUnlocked ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-teacher font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> ¡Obtenido!
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Got it!
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-teacher font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">
                       <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
-                      Necesitas {stk.requiredStars} ⭐
+                      You need {stk.requiredStars} ⭐
                     </span>
                   )}
                 </div>
@@ -154,21 +154,21 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
         </div>
       </div>
 
-      {/* Phonics Report Card / Boletín Escolar */}
+      {/* Phonics Report Card / School Report */}
       <div className="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-md">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-teacher font-extrabold text-2xl text-slate-800 flex items-center gap-2">
               <BookCheck className="w-6 h-6 text-emerald-600" />
-              <span>Boletín de Dominio Fonético</span>
+              <span>Phonics Report Card</span>
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Progreso por familias de vocal corta y grupos avanzados para grados 1º a 3º.
+              Progress in short vowel families and advanced groups for grades 1 to 3.
             </p>
           </div>
 
           <div className="bg-emerald-50 border border-emerald-300 px-3.5 py-1.5 rounded-2xl text-emerald-900 font-teacher font-extrabold text-sm">
-            Dominio Global: {overallPercent}%
+            Overall Mastery: {overallPercent}%
           </div>
         </div>
 
@@ -183,7 +183,7 @@ export const RewardsAndStickers: React.FC<RewardsAndStickersProps> = ({
                   {group.title}
                 </span>
                 <span className="text-xs font-mono font-bold text-slate-600">
-                  {mastered}/{total} palabras ({percent}%)
+                  {mastered}/{total} words ({percent}%)
                 </span>
               </div>
 

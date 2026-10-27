@@ -9,9 +9,9 @@ interface CourseMapProps {
 }
 
 const MODE_LABEL: Record<WordSort['mode'], string> = {
-  sort: 'Clasificar',
-  quiz: 'Repaso rápido',
-  assessment: 'Evaluación',
+  sort: 'Sort',
+  quiz: 'Quick review',
+  assessment: 'Assessment',
 };
 
 export const CourseMap: React.FC<CourseMapProps> = ({ progress, onOpenSort }) => {
@@ -25,14 +25,14 @@ export const CourseMap: React.FC<CourseMapProps> = ({ progress, onOpenSort }) =>
       <div className="bg-white rounded-3xl border-2 border-amber-200 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-teacher font-extrabold text-2xl text-slate-800">Curso de Fonética</h2>
-            <p className="text-sm text-slate-500">Etapa Letter-Name Alphabetic · 6 unidades · {totalSorts} sorts</p>
+            <h2 className="font-teacher font-extrabold text-2xl text-slate-800">Phonics Course</h2>
+            <p className="text-sm text-slate-500">Letter-Name Alphabetic Stage · 6 units · {totalSorts} sorts</p>
           </div>
           <div className="text-right shrink-0">
             <div className="font-teacher font-extrabold text-2xl text-amber-600">
               {doneSorts}/{totalSorts}
             </div>
-            <div className="text-xs text-slate-500">completados</div>
+            <div className="text-xs text-slate-500">completed</div>
           </div>
         </div>
         <div className="mt-3 h-2 bg-amber-100 rounded-full overflow-hidden">
@@ -52,7 +52,7 @@ export const CourseMap: React.FC<CourseMapProps> = ({ progress, onOpenSort }) =>
               <span className="text-3xl">{unit.emoji}</span>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold uppercase tracking-wide opacity-90">
-                  Unidad {unit.number} · Sorts {unit.sorts[0].number}–{unit.sorts[unit.sorts.length - 1].number}
+                  Unit {unit.number} · Sorts {unit.sorts[0].number}–{unit.sorts[unit.sorts.length - 1].number}
                 </div>
                 <div className="font-teacher font-extrabold text-lg leading-tight">{unit.title}</div>
                 <div className="text-xs opacity-90">{unit.descriptionEs}</div>
@@ -85,7 +85,7 @@ export const CourseMap: React.FC<CourseMapProps> = ({ progress, onOpenSort }) =>
                         <div className="font-bold text-slate-800 truncate">{sort.title}</div>
                         <div className="text-xs text-slate-500 truncate">
                           {MODE_LABEL[sort.mode]}
-                          {sort.mode === 'sort' && ` · ${sort.cards.length} tarjetas · ${preview}`}
+                          {sort.mode === 'sort' && ` · ${sort.cards.length} cards · ${preview}`}
                         </div>
                       </div>
                       {p?.completed ? (

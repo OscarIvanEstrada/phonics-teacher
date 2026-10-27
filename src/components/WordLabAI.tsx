@@ -91,14 +91,14 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'No se pudieron generar palabras');
+        throw new Error(errorData.error || 'Could not make new words');
       }
 
       const data = await response.json();
       const rawWords = data.words || [];
 
       if (!rawWords.length) {
-        throw new Error('Gemini no devolvió palabras nuevas para este patrón.');
+        throw new Error('The AI did not find new words for this pattern.');
       }
 
       // 3. Format and store in IndexedDB
@@ -108,7 +108,7 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
         onset: item.onset || item.word.slice(0, 1),
         rime: item.rime || selectedFamily.pattern,
         phonetics: item.phonetics || `/${item.word}/`,
-        meaningEs: item.meaningEs || 'nueva palabra',
+        meaningEs: item.meaningEs || '',
         exampleSentence: item.exampleSentence || `Look at that ${item.word}!`,
         exampleSentenceEs: item.exampleSentenceEs || '',
         emoji: item.emoji || '✨',
@@ -145,7 +145,7 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
       console.error(err);
       setErrorMsg(
         err.message ||
-          'Ocurrió un inconveniente al generar palabras. Verifica tu conexión o intenta nuevamente.'
+          'Something went wrong while making words. Check your connection and try again.'
       );
     } finally {
       setIsGenerating(false);
@@ -163,7 +163,7 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
   };
 
   const handleClearAll = async () => {
-    if (window.confirm('¿Seguro que deseas vaciar todas las palabras generadas en la memoria IndexedDB?')) {
+    if (window.confirm('Are you sure you want to delete all the AI words saved in memory?')) {
       await clearAllGeneratedWords();
       audioService.playPopSound();
       await loadStoredWords();
@@ -196,12 +196,12 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-teacher font-extrabold tracking-wide">
-              Laboratorio de Palabras IA & Memoria
+              AI Word Lab & Memory
             </h2>
             <p className="text-sm text-purple-200 font-medium max-w-2xl mt-1">
-              ¿Quieres más palabras para tu familia de sonido? El profesor usa Inteligencia Artificial para
-              crear palabras reales en inglés y las guarda en el <strong>IndexedDB</strong> de tu navegador
-              para <strong>nunca repetir las mismas</strong>.
+              Want more words for your sound family? The teacher uses AI to
+              make real English words and saves them in your browser's <strong>IndexedDB</strong>
+              so you <strong>never get the same words twice</strong>.
             </p>
           </div>
 
@@ -211,7 +211,7 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
                 {storedWords.length}
               </div>
               <div className="text-[11px] font-bold text-purple-200 uppercase tracking-wider">
-                En Memoria IDB
+                In IDB Memory
               </div>
             </div>
           </div>
@@ -224,7 +224,7 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
           {/* Family Picker */}
           <div className="flex-1">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 font-teacher">
-              1. Selecciona la Familia de Sonido para Experimentar:
+              1. Pick a Sound Family to Explore:
             </label>
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
               {allFamilies.map((fam) => {
@@ -264,12 +264,12 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
               {isGenerating ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span>Profesor generando nuevas palabras...</span>
+                  <span>The teacher is making new words...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 text-amber-300 animate-bounce" />
-                  <span>¡Generar Nuevas Palabras con IA! (+5 ⭐)</span>
+                  <span>Make New Words with AI! (+5 ⭐)</span>
                 </>
               )}
             </button>
@@ -289,13 +289,13 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-teacher font-bold text-xl text-slate-800 flex items-center gap-2">
-              <span>Palabras Almacenadas en IndexedDB ({selectedFamily.pattern})</span>
+              <span>Words Saved in IndexedDB ({selectedFamily.pattern})</span>
               <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                {familyGeneratedWords.length} inventadas
+                {familyGeneratedWords.length} created
               </span>
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Estas palabras se guardan localmente en tu equipo para evitar repeticiones en futuras generaciones.
+              These words are saved on your device so new lists never repeat them.
             </p>
           </div>
 
@@ -303,10 +303,10 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
             <button
               onClick={handleClearAll}
               className="text-xs font-teacher font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
-              title="Borrar todas las palabras generadas en IndexedDB"
+              title="Delete all AI words saved in IndexedDB"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Limpiar memoria IDB</span>
+              <span>Clear IDB memory</span>
             </button>
           )}
         </div>
@@ -315,11 +315,11 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
           <div className="text-center py-10 px-4 bg-purple-50/50 rounded-2xl border-2 border-dashed border-purple-200">
             <div className="text-4xl mb-2">🧪✨</div>
             <h4 className="font-teacher font-bold text-slate-700 text-base mb-1">
-              Aún no has generado palabras para la familia {selectedFamily.pattern}
+              You have not made any words for the {selectedFamily.pattern} family yet
             </h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
-              Presiona el botón púrpura superior. El profesor consultará con Gemini para buscar palabras reales
-              que rimen con {selectedFamily.pattern} y las guardará en tu memoria IndexedDB.
+              Press the purple button above. The teacher will ask Gemini for real words
+              that rhyme with {selectedFamily.pattern} and save them in your IndexedDB memory.
             </p>
             <button
               onClick={handleGenerateNewWords}
@@ -327,7 +327,7 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
               className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-teacher font-bold text-xs shadow inline-flex items-center gap-2 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Generar mi primera lista</span>
+              <span>Make my first list</span>
             </button>
           </div>
         ) : (
@@ -347,12 +347,12 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
                   {/* Badge */}
                   <div className="flex items-center justify-between mb-2">
                     <span className="inline-flex items-center gap-1 text-[10px] bg-purple-100 text-purple-700 font-teacher font-bold px-2 py-0.5 rounded-md border border-purple-200">
-                      <Sparkles className="w-3 h-3 text-purple-500" /> IA + IndexedDB
+                      <Sparkles className="w-3 h-3 text-purple-500" /> AI + IndexedDB
                     </span>
                     <button
                       onClick={() => handleDeleteWord(item.word)}
                       className="text-slate-400 hover:text-rose-500 transition-colors p-1"
-                      title="Eliminar palabra de IndexedDB"
+                      title="Delete word from IndexedDB"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -372,10 +372,6 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
                     </div>
                   </div>
 
-                  <div className="text-xs text-slate-700 font-semibold mb-2 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
-                    Español: <strong>{item.meaningEs}</strong>
-                  </div>
-
                   <p className="text-xs text-slate-600 italic leading-snug mb-3">
                     "{item.exampleSentence}"
                   </p>
@@ -391,14 +387,14 @@ export const WordLabAI: React.FC<WordLabAIProps> = ({
                       }`}
                     >
                       <Volume2 className="w-3.5 h-3.5" />
-                      <span>Escuchar</span>
+                      <span>Listen</span>
                     </button>
 
                     <button
                       onClick={() => onPracticeInVoice(item)}
                       className="text-xs font-teacher font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
                     >
-                      ¡Pronunciar! →
+                      Say it! →
                     </button>
                   </div>
                 </div>

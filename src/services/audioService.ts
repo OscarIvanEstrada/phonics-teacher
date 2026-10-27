@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { audioPath } from './audioPaths';
+import { IS_STATIC } from '../config';
 import { isPublished, markGenerated, readPublishedAudio } from './publishedAudio';
 import { PhonemeSound, parsePhonetics } from './phonemes';
 import { NativeTTS, NATIVE_RATE, TeacherVoiceKey, defaultVoiceFor, getVoicePrefs, listEnglishVoices } from './nativeTts';
@@ -153,6 +154,8 @@ class AudioService {
       const { audioBase64 } = await NativeTTS.synthesize({ text: request.text, ipa: request.ipa, voiceId, rate });
       return { audioBase64, source: 'ios-native' };
     }
+
+    if (IS_STATIC) return null; // no server on GitHub Pages
 
     const response = await fetch('/api/tts', {
       method: 'POST',
